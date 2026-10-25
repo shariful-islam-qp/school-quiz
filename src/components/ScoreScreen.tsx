@@ -1,0 +1,67 @@
+"use client";
+
+import type { ScoreResult } from "@/lib/types";
+
+type ScoreScreenProps = {
+  result: ScoreResult;
+  onPlayAgain: () => void;
+};
+
+export function ScoreScreen({ result, onPlayAgain }: ScoreScreenProps) {
+  const percent = Math.round((result.score / result.total) * 100);
+
+  return (
+    <section className="score-screen">
+      <header>
+        <p className="eyebrow">Results</p>
+        <h1>
+          {result.score} / {result.total}
+        </h1>
+        <p className="lede">You scored {percent}%.</p>
+      </header>
+
+      <ul className="result-list">
+        {result.results.map((item, index) => (
+          <li
+            key={item.questionId}
+            className={item.isCorrect ? "correct" : "incorrect"}
+          >
+            <div className="result-top">
+              <strong>
+                Q{index + 1}. {item.prompt}
+              </strong>
+              <span className="result-badge">
+                {item.isCorrect
+                  ? "Correct"
+                  : item.timedOut
+                    ? "Timed out"
+                    : "Wrong"}
+              </span>
+            </div>
+            <p>
+              Your answer:{" "}
+              <span
+                className={item.isCorrect ? "answer-correct" : "answer-wrong"}
+              >
+                {item.selectedIndex === null
+                  ? "—"
+                  : item.options[item.selectedIndex]}
+              </span>
+              {!item.isCorrect ? (
+                <>
+                  {" "}
+                  · Correct:{" "}
+                  <span className="answer-correct">{item.correctAnswer}</span>
+                </>
+              ) : null}
+            </p>
+          </li>
+        ))}
+      </ul>
+
+      <button type="button" className="primary-btn" onClick={onPlayAgain}>
+        Play again
+      </button>
+    </section>
+  );
+}

@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# School Quiz
 
-## Getting Started
+Timed multiple-choice school quizzes. **Math** is available now; English and Bangla are placeholders.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router) + **React 19** + **TypeScript**
+- **Tailwind CSS 4** for styling
+- API routes for quiz generation and scoring (correct answers stay server-side)
+
+## Features
+
+- Subject: Math / English / Bangla (default **Math**)
+- Math: configurable max number, addition/subtraction, question count (default **5**)
+- 4 answer choices each
+- Per-question timer (default **60s**); timeout counts as wrong
+- Instant colored result after each answer, then final score review
+
+## Run locally
 
 ```bash
+cd quiz
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## API
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### `POST /api/quiz`
 
-## Learn More
+Create a quiz session.
 
-To learn more about Next.js, take a look at the following resources:
+```json
+{
+  "subject": "math",
+  "maxNumber": 10,
+  "operations": ["addition", "subtraction"],
+  "timeLimitSeconds": 60,
+  "questionCount": 5
+}
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Returns `quizId`, `timeLimitSeconds`, and public `questions` (no correct answers).  
+`english` / `bangla` return an error until questions are added.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### `POST /api/quiz/check`
 
-## Deploy on Vercel
+Check one answer and get immediate feedback.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```json
+{
+  "quizId": "...",
+  "questionId": "...",
+  "selectedIndex": 2
+}
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### `POST /api/quiz/submit`
+
+Score a finished quiz.
+
+```json
+{
+  "quizId": "...",
+  "answers": [
+    { "questionId": "...", "selectedIndex": 2 },
+    { "questionId": "...", "selectedIndex": null }
+  ]
+}
+```
+
+`selectedIndex: null` means timed out / unanswered.
