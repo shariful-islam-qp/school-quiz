@@ -1,15 +1,17 @@
 import type { Metadata } from "next";
-import { Fraunces, Noto_Sans_Bengali, Nunito } from "next/font/google";
+import { Fredoka, Noto_Sans_Bengali, Nunito } from "next/font/google";
 import "./globals.css";
 
-const display = Fraunces({
+const display = Fredoka({
   variable: "--font-display",
   subsets: ["latin"],
+  weight: ["500", "600", "700"],
 });
 
 const body = Nunito({
   variable: "--font-body",
   subsets: ["latin"],
+  weight: ["600", "700", "800"],
 });
 
 const bangla = Noto_Sans_Bengali({
@@ -19,9 +21,9 @@ const bangla = Noto_Sans_Bengali({
 });
 
 export const metadata: Metadata = {
-  title: "School Quiz",
+  title: "Quiz Time",
   description:
-    "Timed school quizzes for Math, English, and Bangla.",
+    "Colorful timed school quizzes for Math, English, and Bangla.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

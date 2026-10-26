@@ -151,7 +151,7 @@ export function QuizPlayer({
   }
 
   return (
-    <section className="quiz-player">
+    <section className="quiz-player panel pop-in">
       <div className="quiz-meta">
         <span>
           Question {index + 1} of {questions.length}
@@ -166,6 +166,7 @@ export function QuizPlayer({
       </div>
 
       <h2
+        key={question.id}
         lang={banglaText ? "bn" : undefined}
         className={banglaText ? "prompt prompt-compact" : "prompt"}
       >

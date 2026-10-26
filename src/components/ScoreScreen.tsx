@@ -17,8 +17,11 @@ export function ScoreScreen({ result, onPlayAgain }: ScoreScreenProps) {
   const percent = Math.round((result.score / result.total) * 100);
 
   return (
-    <section className="score-screen">
-      <header>
+    <section className="score-screen panel pop-in">
+      <header className="score-hero">
+        <div className="score-burst" aria-hidden>
+          {percent}%
+        </div>
         <p className="eyebrow">Results</p>
         <h1>
           {result.score} / {result.total}
