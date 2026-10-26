@@ -10,15 +10,17 @@ export type QuizSettings = {
   questionCount: number;
 };
 
+export type QuizChoice = string | number;
+
 export type PublicQuestion = {
   id: string;
   prompt: string;
-  options: number[];
+  options: QuizChoice[];
 };
 
 export type StoredQuestion = PublicQuestion & {
   correctIndex: number;
-  correctAnswer: number;
+  correctAnswer: QuizChoice;
 };
 
 export type QuizSession = {
@@ -37,10 +39,10 @@ export type AnswerSubmission = {
 export type QuestionResult = {
   questionId: string;
   prompt: string;
-  options: number[];
+  options: QuizChoice[];
   selectedIndex: number | null;
   correctIndex: number;
-  correctAnswer: number;
+  correctAnswer: QuizChoice;
   isCorrect: boolean;
   timedOut: boolean;
 };

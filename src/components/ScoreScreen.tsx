@@ -1,6 +1,12 @@
 "use client";
 
-import type { ScoreResult } from "@/lib/types";
+import type { QuizChoice, ScoreResult } from "@/lib/types";
+
+function answerLang(value: QuizChoice | null): "bn" | undefined {
+  return typeof value === "string" && /[\u0980-\u09FF]/.test(value)
+    ? "bn"
+    : undefined;
+}
 
 type ScoreScreenProps = {
   result: ScoreResult;
@@ -27,7 +33,7 @@ export function ScoreScreen({ result, onPlayAgain }: ScoreScreenProps) {
             className={item.isCorrect ? "correct" : "incorrect"}
           >
             <div className="result-top">
-              <strong>
+              <strong lang={/[\u0980-\u09FF]/.test(item.prompt) ? "bn" : undefined}>
                 Q{index + 1}. {item.prompt}
               </strong>
               <span className="result-badge">
@@ -41,6 +47,11 @@ export function ScoreScreen({ result, onPlayAgain }: ScoreScreenProps) {
             <p>
               Your answer:{" "}
               <span
+                lang={answerLang(
+                  item.selectedIndex === null
+                    ? null
+                    : item.options[item.selectedIndex],
+                )}
                 className={item.isCorrect ? "answer-correct" : "answer-wrong"}
               >
                 {item.selectedIndex === null
@@ -51,7 +62,12 @@ export function ScoreScreen({ result, onPlayAgain }: ScoreScreenProps) {
                 <>
                   {" "}
                   · Correct:{" "}
-                  <span className="answer-correct">{item.correctAnswer}</span>
+                  <span
+                    lang={answerLang(item.correctAnswer)}
+                    className="answer-correct"
+                  >
+                    {item.correctAnswer}
+                  </span>
                 </>
               ) : null}
             </p>

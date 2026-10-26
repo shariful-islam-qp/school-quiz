@@ -13,16 +13,20 @@ export async function POST(request: Request) {
     const body = (await request.json()) as Partial<QuizSettings>;
     const settings = normalizeSettings(body);
 
-    if (settings.subject !== "math") {
+    if (settings.subject === "english") {
       return NextResponse.json(
-        {
-          error: `${capitalize(settings.subject)} questions are not available yet.`,
-        },
+        { error: "English questions are not available yet." },
         { status: 400 },
       );
     }
 
     const questions = generateQuizQuestions(settings);
+    if (questions.length === 0) {
+      return NextResponse.json(
+        { error: "No questions are available for this subject." },
+        { status: 400 },
+      );
+    }
     const id = randomUUID();
 
     saveSession({
@@ -43,8 +47,4 @@ export async function POST(request: Request) {
       error instanceof Error ? error.message : "Failed to create quiz.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
-}
-
-function capitalize(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }

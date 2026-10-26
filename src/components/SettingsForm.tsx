@@ -30,7 +30,8 @@ export function SettingsForm({ onStart, isLoading, error }: SettingsFormProps) {
   ]);
 
   const isMath = subject === "math";
-  const canStart = isMath && !isLoading;
+  const isBangla = subject === "bangla";
+  const canStart = (isMath || isBangla) && !isLoading;
 
   function toggleOperation(operation: MathOperation) {
     setOperations((current) =>
@@ -42,7 +43,7 @@ export function SettingsForm({ onStart, isLoading, error }: SettingsFormProps) {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!isMath) {
+    if (!isMath && !isBangla) {
       return;
     }
 
@@ -81,7 +82,7 @@ export function SettingsForm({ onStart, isLoading, error }: SettingsFormProps) {
             </label>
           ))}
         </div>
-        {!isMath ? (
+        {subject === "english" ? (
           <small>No questions yet for this subject.</small>
         ) : null}
       </fieldset>
@@ -153,12 +154,44 @@ export function SettingsForm({ onStart, isLoading, error }: SettingsFormProps) {
         </>
       ) : null}
 
+      {isBangla ? (
+        <>
+          <label className="field">
+            <span>Number of questions</span>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={questionCount}
+              onChange={(event) => setQuestionCount(Number(event.target.value))}
+              required
+            />
+            <small>Default 5. Ask between 1 and 20 questions.</small>
+          </label>
+
+          <label className="field">
+            <span>Seconds per question</span>
+            <input
+              type="number"
+              min={5}
+              max={300}
+              value={timeLimitSeconds}
+              onChange={(event) =>
+                setTimeLimitSeconds(Number(event.target.value))
+              }
+              required
+            />
+            <small>Default 60. No answer before time runs out = wrong.</small>
+          </label>
+        </>
+      ) : null}
+
       {error ? <p className="error">{error}</p> : null}
 
       <button type="submit" className="primary-btn" disabled={!canStart}>
         {isLoading
           ? "Starting…"
-          : isMath
+          : isMath || isBangla
             ? "Start quiz"
             : "Coming soon"}
       </button>

@@ -129,6 +129,7 @@ export function QuizPlayer({
   }
 
   const timerUrgent = secondsLeft <= 10 && !feedback;
+  const banglaText = /[\u0980-\u09FF]/.test(question.prompt);
 
   function optionClass(optionIndex: number): string {
     if (!feedback) {
@@ -164,13 +165,19 @@ export function QuizPlayer({
         <div className="progress-fill" style={{ width: `${progress}%` }} />
       </div>
 
-      <h2 className="prompt">{question.prompt}</h2>
+      <h2
+        lang={banglaText ? "bn" : undefined}
+        className={banglaText ? "prompt prompt-compact" : "prompt"}
+      >
+        {question.prompt}
+      </h2>
 
       <div className="options-grid">
         {question.options.map((option, optionIndex) => (
           <button
             key={`${question.id}-${option}-${optionIndex}`}
             type="button"
+            lang={banglaText ? "bn" : undefined}
             className={optionClass(optionIndex)}
             disabled={Boolean(feedback) || isChecking || isFinishing}
             onClick={() => void submitAnswer(optionIndex)}
