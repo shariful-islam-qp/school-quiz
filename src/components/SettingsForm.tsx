@@ -30,8 +30,8 @@ export function SettingsForm({ onStart, isLoading, error }: SettingsFormProps) {
   ]);
 
   const isMath = subject === "math";
-  const isBangla = subject === "bangla";
-  const canStart = (isMath || isBangla) && !isLoading;
+  const usesSharedTiming = subject === "english" || subject === "bangla";
+  const canStart = !isLoading;
 
   function toggleOperation(operation: MathOperation) {
     setOperations((current) =>
@@ -43,9 +43,6 @@ export function SettingsForm({ onStart, isLoading, error }: SettingsFormProps) {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!isMath && !isBangla) {
-      return;
-    }
 
     await onStart({
       subject,
@@ -82,9 +79,6 @@ export function SettingsForm({ onStart, isLoading, error }: SettingsFormProps) {
             </label>
           ))}
         </div>
-        {subject === "english" ? (
-          <small>No questions yet for this subject.</small>
-        ) : null}
       </fieldset>
 
       {isMath ? (
@@ -154,7 +148,7 @@ export function SettingsForm({ onStart, isLoading, error }: SettingsFormProps) {
         </>
       ) : null}
 
-      {isBangla ? (
+      {usesSharedTiming ? (
         <>
           <label className="field">
             <span>Number of questions</span>
@@ -189,11 +183,7 @@ export function SettingsForm({ onStart, isLoading, error }: SettingsFormProps) {
       {error ? <p className="error">{error}</p> : null}
 
       <button type="submit" className="primary-btn" disabled={!canStart}>
-        {isLoading
-          ? "Starting…"
-          : isMath || isBangla
-            ? "Start quiz"
-            : "Coming soon"}
+        {isLoading ? "Starting…" : "Start quiz"}
       </button>
     </form>
   );

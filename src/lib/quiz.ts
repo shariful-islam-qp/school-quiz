@@ -1,4 +1,5 @@
 import { generateBanglaQuestions } from "./bangla";
+import { generateEnglishQuestions } from "./english";
 import type {
   MathOperation,
   PublicQuestion,
@@ -86,6 +87,10 @@ export function generateQuestion(
 export function generateQuizQuestions(settings: QuizSettings): StoredQuestion[] {
   if (settings.subject === "bangla") {
     return generateBanglaQuestions(settings.questionCount);
+  }
+
+  if (settings.subject === "english") {
+    return generateEnglishQuestions(settings.questionCount);
   }
 
   if (settings.subject !== "math") {

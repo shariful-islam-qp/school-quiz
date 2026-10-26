@@ -13,13 +13,6 @@ export async function POST(request: Request) {
     const body = (await request.json()) as Partial<QuizSettings>;
     const settings = normalizeSettings(body);
 
-    if (settings.subject === "english") {
-      return NextResponse.json(
-        { error: "English questions are not available yet." },
-        { status: 400 },
-      );
-    }
-
     const questions = generateQuizQuestions(settings);
     if (questions.length === 0) {
       return NextResponse.json(
