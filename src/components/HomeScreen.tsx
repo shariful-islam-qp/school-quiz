@@ -1,11 +1,9 @@
 "use client";
 
 import type { QuizSubject } from "@/lib/types";
-import type { QuizPreferences } from "@/lib/preferences";
 
 type HomeScreenProps = {
   subject: QuizSubject;
-  preferences: QuizPreferences;
   isLoading: boolean;
   error: string | null;
   onSubjectChange: (subject: QuizSubject) => void;
@@ -45,7 +43,6 @@ const SUBJECTS: {
 
 export function HomeScreen({
   subject,
-  preferences,
   isLoading,
   error,
   onSubjectChange,
@@ -78,21 +75,6 @@ export function HomeScreen({
             <small>{item.hint}</small>
           </button>
         ))}
-      </div>
-
-      <div className="home-summary-card">
-        <p className="home-summary">
-          {preferences.questionCount} questions · {preferences.timeLimitSeconds}
-          s each
-          {subject === "math" ? ` · up to ${preferences.maxNumber}` : null}
-        </p>
-        <button
-          type="button"
-          className="settings-link-btn"
-          onClick={onOpenSettings}
-        >
-          Change settings
-        </button>
       </div>
 
       {error ? <p className="error">{error}</p> : null}

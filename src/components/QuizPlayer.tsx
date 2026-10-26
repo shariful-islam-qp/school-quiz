@@ -7,6 +7,8 @@ import type {
   QuestionResult,
 } from "@/lib/types";
 
+type ConfirmAction = "end" | "restart" | null;
+
 type QuizPlayerProps = {
   quizId: string;
   questions: PublicQuestion[];
@@ -15,6 +17,8 @@ type QuizPlayerProps = {
     answers: AnswerSubmission[],
     results: QuestionResult[],
   ) => Promise<void>;
+  onEnd: () => void;
+  onRestart: () => void;
 };
 
 export function QuizPlayer({
@@ -22,12 +26,15 @@ export function QuizPlayer({
   questions,
   timeLimitSeconds,
   onComplete,
+  onEnd,
+  onRestart,
 }: QuizPlayerProps) {
   const [index, setIndex] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(timeLimitSeconds);
   const [feedback, setFeedback] = useState<QuestionResult | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
   const [error, setError] = useState<string | null>(null);
 
   const answersRef = useRef<AnswerSubmission[]>([]);
@@ -40,8 +47,8 @@ export function QuizPlayer({
   feedbackRef.current = feedback;
 
   const question = questions[index];
-  const progress = ((index + 1) / questions.length) * 100;
-  const timerPaused = Boolean(feedback) || isChecking || isFinishing;
+  const timerPaused =
+    Boolean(feedback) || isChecking || isFinishing || Boolean(confirmAction);
 
   useEffect(() => {
     lockedRef.current = false;
@@ -70,7 +77,13 @@ export function QuizPlayer({
   }, [secondsLeft]);
 
   async function submitAnswer(selectedIndex: number | null) {
-    if (lockedRef.current || feedback || isChecking || isFinishing) {
+    if (
+      lockedRef.current ||
+      feedback ||
+      isChecking ||
+      isFinishing ||
+      confirmAction
+    ) {
       return;
     }
 
@@ -128,7 +141,15 @@ export function QuizPlayer({
     setIndex((current) => current + 1);
   }
 
-  const timerUrgent = secondsLeft <= 10 && !feedback;
+  const timerPausedVisual = Boolean(feedback) || Boolean(confirmAction);
+  const timeRatio = Math.max(0, Math.min(1, secondsLeft / timeLimitSeconds));
+  const timerTone = timerPausedVisual
+    ? "paused"
+    : timeRatio > 0.5
+      ? "ok"
+      : timeRatio > 0.25
+        ? "warn"
+        : "danger";
   const banglaText = /[\u0980-\u09FF]/.test(question.prompt);
 
   function optionClass(optionIndex: number): string {
@@ -150,19 +171,136 @@ export function QuizPlayer({
     return "option-btn is-dimmed";
   }
 
+  function confirmTitle(): string {
+    return confirmAction === "restart" ? "Restart quiz?" : "End quiz?";
+  }
+
+  function confirmMessage(): string {
+    return confirmAction === "restart"
+      ? "This quiz will stop and a new one will start."
+      : "Your progress will be lost and you will go home.";
+  }
+
+  function confirmLabel(): string {
+    return confirmAction === "restart" ? "Restart" : "End quiz";
+  }
+
+  function handleConfirm() {
+    if (confirmAction === "restart") {
+      onRestart();
+      return;
+    }
+    if (confirmAction === "end") {
+      onEnd();
+    }
+  }
+
   return (
     <section className="quiz-player panel pop-in">
+      <div className="quiz-toolbar">
+        <button
+          type="button"
+          className="quiz-tool-btn"
+          onClick={() => setConfirmAction("end")}
+          disabled={isFinishing}
+        >
+          End
+        </button>
+        <button
+          type="button"
+          className="quiz-tool-btn"
+          onClick={() => setConfirmAction("restart")}
+          disabled={isFinishing}
+        >
+          Restart
+        </button>
+      </div>
+
       <div className="quiz-meta">
         <span>
           Question {index + 1} of {questions.length}
         </span>
-        <span className={`timer ${timerUrgent ? "urgent" : ""}`}>
-          {feedback ? "—" : `${secondsLeft}s`}
-        </span>
       </div>
 
-      <div className="progress-track" aria-hidden>
-        <div className="progress-fill" style={{ width: `${progress}%` }} />
+      <div
+        className={`time-progress tone-${timerTone}`}
+        role="timer"
+        aria-label={
+          timerPausedVisual
+            ? "Timer paused"
+            : `${secondsLeft} seconds remaining out of ${timeLimitSeconds}`
+        }
+        style={{
+          margin: "0 0 1rem",
+          padding: "0.75rem 0.9rem",
+          borderRadius: 16,
+          border: "2px solid",
+          borderColor:
+            timerTone === "warn"
+              ? "#fde68a"
+              : timerTone === "danger"
+                ? "#fecaca"
+                : timerTone === "paused"
+                  ? "#e2e8f0"
+                  : "#bbf7d0",
+          background:
+            timerTone === "warn"
+              ? "#fffbeb"
+              : timerTone === "danger"
+                ? "#fef2f2"
+                : timerTone === "paused"
+                  ? "#f8fafc"
+                  : "#ecfdf3",
+        }}
+      >
+        <div
+          className="time-progress-top"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "0.75rem",
+            marginBottom: "0.55rem",
+            fontWeight: 800,
+          }}
+        >
+          <strong>Time left</strong>
+          <span>
+            {timerPausedVisual
+              ? "Paused"
+              : `${secondsLeft}s / ${timeLimitSeconds}s`}
+          </span>
+        </div>
+        <div
+          className="time-progress-track"
+          style={{
+            width: "100%",
+            height: 18,
+            borderRadius: 999,
+            background: "#ffffff",
+            border: "1px solid rgba(36, 52, 71, 0.12)",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            className="time-progress-fill"
+            style={{
+              width: `${Math.max(timeRatio * 100, timeRatio > 0 ? 2 : 0)}%`,
+              height: "100%",
+              minHeight: 18,
+              borderRadius: 999,
+              background:
+                timerTone === "warn"
+                  ? "linear-gradient(90deg, #fbbf24, #f59e0b)"
+                  : timerTone === "danger"
+                    ? "linear-gradient(90deg, #fb7185, #ef4444)"
+                    : timerTone === "paused"
+                      ? "#94a3b8"
+                      : "linear-gradient(90deg, #4ade80, #16a34a)",
+              transition: "width 900ms linear, background 160ms ease",
+            }}
+          />
+        </div>
       </div>
 
       <h2
@@ -180,7 +318,12 @@ export function QuizPlayer({
             type="button"
             lang={banglaText ? "bn" : undefined}
             className={optionClass(optionIndex)}
-            disabled={Boolean(feedback) || isChecking || isFinishing}
+            disabled={
+              Boolean(feedback) ||
+              isChecking ||
+              isFinishing ||
+              Boolean(confirmAction)
+            }
             onClick={() => void submitAnswer(optionIndex)}
           >
             {option}
@@ -215,6 +358,41 @@ export function QuizPlayer({
                 ? "See final score"
                 : "Next question"}
           </button>
+        </div>
+      ) : null}
+
+      {confirmAction ? (
+        <div
+          className="exit-modal-backdrop"
+          role="presentation"
+          onClick={() => setConfirmAction(null)}
+        >
+          <div
+            className="exit-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="quiz-confirm-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 id="quiz-confirm-title">{confirmTitle()}</h3>
+            <p>{confirmMessage()}</p>
+            <div className="exit-modal-actions">
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() => setConfirmAction(null)}
+              >
+                Keep playing
+              </button>
+              <button
+                type="button"
+                className="danger-btn"
+                onClick={handleConfirm}
+              >
+                {confirmLabel()}
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </section>

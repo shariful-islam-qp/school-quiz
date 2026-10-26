@@ -138,6 +138,49 @@ export function QuizApp() {
     setPhase("home");
   }
 
+  function endQuiz() {
+    setActiveQuiz(null);
+    setScore(null);
+    setError(null);
+    setPhase("home");
+  }
+
+  async function restartQuiz() {
+    if (!preferences) {
+      return;
+    }
+
+    setScore(null);
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/quiz", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(preferencesToSettings(subject, preferences)),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Could not restart quiz.");
+      }
+
+      setActiveQuiz({
+        quizId: data.quizId,
+        questions: data.questions,
+        timeLimitSeconds: data.timeLimitSeconds,
+      });
+      setPhase("playing");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not restart quiz.");
+      setActiveQuiz(null);
+      setPhase("home");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   async function handleSavePreferences(next: QuizPreferences) {
     const response = await fetch("/api/settings", {
       method: "PUT",
@@ -173,7 +216,6 @@ export function QuizApp() {
       {phase === "home" ? (
         <HomeScreen
           subject={subject}
-          preferences={preferences}
           isLoading={isLoading}
           error={error}
           onSubjectChange={setSubject}
@@ -197,6 +239,8 @@ export function QuizApp() {
           questions={activeQuiz.questions}
           timeLimitSeconds={activeQuiz.timeLimitSeconds}
           onComplete={finishQuiz}
+          onEnd={endQuiz}
+          onRestart={() => void restartQuiz()}
         />
       ) : null}
 

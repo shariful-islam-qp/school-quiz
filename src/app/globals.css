@@ -140,25 +140,12 @@ input {
 }
 
 .home-summary-card {
-  display: grid;
-  gap: 0.35rem;
-  justify-items: center;
   margin: 0 0 1rem;
-  padding: 0.85rem 1rem;
+  padding: 0.75rem 1rem;
   border-radius: 18px;
   background: #fff8e8;
   border: 2px dashed #f0d59a;
-}
-
-.settings-link-btn {
-  border: 0;
-  background: transparent;
-  color: var(--accent-deep);
-  font-weight: 800;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-  padding: 0.15rem 0.35rem;
+  text-align: center;
 }
 
 .eyebrow {
@@ -426,6 +413,38 @@ fieldset.field {
   font-weight: 800;
 }
 
+.quiz-player {
+  position: relative;
+}
+
+.quiz-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.quiz-tool-btn {
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 0.88rem;
+  padding: 0.4rem 0.85rem;
+  cursor: pointer;
+}
+
+.quiz-tool-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.quiz-tool-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .quiz-meta {
   display: flex;
   justify-content: space-between;
@@ -434,28 +453,141 @@ fieldset.field {
   margin-bottom: 0.85rem;
 }
 
-.timer {
-  min-width: 3.8rem;
-  text-align: center;
-  padding: 0.4rem 0.8rem;
-  border-radius: 999px;
-  background: #dff3ff;
-  color: var(--sky-deep);
-  animation: soft-pulse 1.6s ease-in-out infinite;
+.exit-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  border-radius: inherit;
+  background: rgba(36, 52, 71, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
 }
 
-.timer.urgent {
-  background: #ffe1d0;
-  color: var(--warn);
-  animation: urgent-pulse 0.7s ease-in-out infinite;
+.exit-modal {
+  width: min(340px, 100%);
+  background: #fff;
+  border-radius: 20px;
+  padding: 1.1rem;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.exit-modal h3 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display), Georgia, serif;
+}
+
+.exit-modal p {
+  margin: 0 0 0.9rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.exit-modal-actions {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.danger-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 20px;
+  padding: 0.95rem 1.2rem;
+  background: linear-gradient(180deg, #ff7d88, var(--danger));
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 0 #c63d4a;
+}
+
+.time-progress {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 16px;
+  background: #ecfdf3;
+  border: 2px solid #bbf7d0;
+}
+
+.time-progress.tone-warn {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.time-progress.tone-danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+  animation: urgent-pulse 0.8s ease-in-out infinite;
+}
+
+.time-progress.tone-paused {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  animation: none;
+}
+
+.time-progress-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-weight: 800;
+}
+
+.time-progress-top strong,
+.time-progress-top span {
+  color: #15803d;
+  font-size: 0.98rem;
+}
+
+.time-progress.tone-warn .time-progress-top strong,
+.time-progress.tone-warn .time-progress-top span {
+  color: #b45309;
+}
+
+.time-progress.tone-danger .time-progress-top strong,
+.time-progress.tone-danger .time-progress-top span {
+  color: #dc2626;
+}
+
+.time-progress.tone-paused .time-progress-top strong,
+.time-progress.tone-paused .time-progress-top span {
+  color: var(--muted);
+}
+
+.time-progress-track {
+  height: 16px;
+  border-radius: 999px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.time-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4ade80, #16a34a);
+  transition: width 900ms linear, background 160ms ease;
+}
+
+.time-progress.tone-warn .time-progress-fill {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.time-progress.tone-danger .time-progress-fill {
+  background: linear-gradient(90deg, #fb7185, #ef4444);
+}
+
+.time-progress.tone-paused .time-progress-fill {
+  background: #94a3b8;
 }
 
 .progress-track {
-  height: 12px;
+  height: 8px;
   border-radius: 999px;
   background: #f0e7d8;
   overflow: hidden;
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.2rem;
 }
 
 .progress-fill {
