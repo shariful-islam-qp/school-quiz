@@ -313,23 +313,25 @@ function missingLetterDrafts(alphabet: string[]): BanglaDraft[] {
 }
 
 function takeDrafts(count: number): BanglaDraft[] {
+  // Build only a small sample per type so serverless memory stays low
+  const perBucket = Math.max(2, Math.ceil(count / 4));
   const buckets = shuffle([
-    shuffle(nextLetterDrafts(VOWELS, 3)),
-    shuffle(nextLetterDrafts(CONSONANTS, 3)),
-    shuffle(nextLetterDrafts(VOWELS, 2)),
-    shuffle(nextLetterDrafts(CONSONANTS, 2)),
-    shuffle(pictureDrafts()),
-    shuffle(wordFromLetterDrafts()),
-    shuffle(firstLetterDrafts()),
-    shuffle(vowelOrConsonantDrafts()),
-    shuffle(numberWordDrafts()),
-    shuffle(numberDigitDrafts()),
-    shuffle(countObjectDrafts()),
-    shuffle(colorDrafts()),
-    shuffle(familyDrafts()),
-    shuffle(bodyPartDrafts()),
-    shuffle(missingLetterDrafts(VOWELS)),
-    shuffle(missingLetterDrafts(CONSONANTS)),
+    shuffle(nextLetterDrafts(VOWELS, 3)).slice(0, perBucket),
+    shuffle(nextLetterDrafts(CONSONANTS, 3)).slice(0, perBucket),
+    shuffle(nextLetterDrafts(VOWELS, 2)).slice(0, perBucket),
+    shuffle(nextLetterDrafts(CONSONANTS, 2)).slice(0, perBucket),
+    shuffle(pictureDrafts()).slice(0, perBucket),
+    shuffle(wordFromLetterDrafts()).slice(0, perBucket),
+    shuffle(firstLetterDrafts()).slice(0, perBucket),
+    shuffle(vowelOrConsonantDrafts()).slice(0, perBucket),
+    shuffle(numberWordDrafts()).slice(0, perBucket),
+    shuffle(numberDigitDrafts()).slice(0, perBucket),
+    shuffle(countObjectDrafts()).slice(0, perBucket),
+    shuffle(colorDrafts()).slice(0, perBucket),
+    shuffle(familyDrafts()).slice(0, perBucket),
+    shuffle(bodyPartDrafts()).slice(0, perBucket),
+    shuffle(missingLetterDrafts(VOWELS)).slice(0, perBucket),
+    shuffle(missingLetterDrafts(CONSONANTS)).slice(0, perBucket),
   ]);
 
   const picked: BanglaDraft[] = [];

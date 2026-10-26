@@ -1,5 +1,3 @@
-import { generateBanglaQuestions } from "./bangla";
-import { generateEnglishQuestions } from "./english";
 import type {
   MathOperation,
   PublicQuestion,
@@ -84,12 +82,16 @@ export function generateQuestion(
   };
 }
 
-export function generateQuizQuestions(settings: QuizSettings): StoredQuestion[] {
+export async function generateQuizQuestions(
+  settings: QuizSettings,
+): Promise<StoredQuestion[]> {
   if (settings.subject === "bangla") {
+    const { generateBanglaQuestions } = await import("./bangla");
     return generateBanglaQuestions(settings.questionCount);
   }
 
   if (settings.subject === "english") {
+    const { generateEnglishQuestions } = await import("./english");
     return generateEnglishQuestions(settings.questionCount);
   }
 

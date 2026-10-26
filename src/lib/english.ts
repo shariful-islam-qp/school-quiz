@@ -167,16 +167,17 @@ function shapeDrafts(): EnglishDraft[] {
 }
 
 function takeDrafts(count: number): EnglishDraft[] {
+  const perBucket = Math.max(2, Math.ceil(count / 3));
   const buckets = shuffle([
-    shuffle(alphabetSequenceDrafts()),
-    shuffle(identifyCapitalDrafts()),
-    shuffle(identifySmallDrafts()),
-    shuffle(afterLetterDrafts()),
-    shuffle(beforeLetterDrafts()),
-    shuffle(caseMatchDrafts()),
-    shuffle(vocabularyDrafts()),
-    shuffle(colourDrafts()),
-    shuffle(shapeDrafts()),
+    shuffle(alphabetSequenceDrafts()).slice(0, perBucket),
+    shuffle(identifyCapitalDrafts()).slice(0, perBucket),
+    shuffle(identifySmallDrafts()).slice(0, perBucket),
+    shuffle(afterLetterDrafts()).slice(0, perBucket),
+    shuffle(beforeLetterDrafts()).slice(0, perBucket),
+    shuffle(caseMatchDrafts()).slice(0, perBucket),
+    shuffle(vocabularyDrafts()).slice(0, perBucket),
+    shuffle(colourDrafts()).slice(0, perBucket),
+    shuffle(shapeDrafts()).slice(0, perBucket),
   ]);
 
   const picked: EnglishDraft[] = [];

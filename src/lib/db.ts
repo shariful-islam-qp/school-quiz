@@ -19,7 +19,14 @@ const globalForDb = globalThis as typeof globalThis & {
   quizDb?: DatabaseSync;
 };
 
+function usesEphemeralFs(): boolean {
+  return Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+}
+
 function getDbPath(): string {
+  if (usesEphemeralFs()) {
+    return path.join("/tmp", "quiz.db");
+  }
   return path.join(process.cwd(), "data", "quiz.db");
 }
 
@@ -90,18 +97,22 @@ function rowToPreferences(row: SettingsRow): QuizPreferences {
 }
 
 export function getStoredPreferences(): QuizPreferences {
-  const row = getDb()
-    .prepare(
-      `SELECT question_count, time_limit_seconds, max_number, operations
-       FROM quiz_settings WHERE id = 1`,
-    )
-    .get() as SettingsRow | undefined;
+  try {
+    const row = getDb()
+      .prepare(
+        `SELECT question_count, time_limit_seconds, max_number, operations
+         FROM quiz_settings WHERE id = 1`,
+      )
+      .get() as SettingsRow | undefined;
 
-  if (!row) {
+    if (!row) {
+      return normalizePreferences(DEFAULT_PREFERENCES);
+    }
+
+    return rowToPreferences(row);
+  } catch {
     return normalizePreferences(DEFAULT_PREFERENCES);
   }
-
-  return rowToPreferences(row);
 }
 
 export function saveStoredPreferences(
@@ -109,23 +120,27 @@ export function saveStoredPreferences(
 ): QuizPreferences {
   const next = normalizePreferences(preferences);
 
-  getDb()
-    .prepare(
-      `UPDATE quiz_settings
-       SET question_count = ?,
-           time_limit_seconds = ?,
-           max_number = ?,
-           operations = ?,
-           updated_at = ?
-       WHERE id = 1`,
-    )
-    .run(
-      next.questionCount,
-      next.timeLimitSeconds,
-      next.maxNumber,
-      JSON.stringify(next.operations),
-      new Date().toISOString(),
-    );
+  try {
+    getDb()
+      .prepare(
+        `UPDATE quiz_settings
+         SET question_count = ?,
+             time_limit_seconds = ?,
+             max_number = ?,
+             operations = ?,
+             updated_at = ?
+         WHERE id = 1`,
+      )
+      .run(
+        next.questionCount,
+        next.timeLimitSeconds,
+        next.maxNumber,
+        JSON.stringify(next.operations),
+        new Date().toISOString(),
+      );
+  } catch {
+    // On some serverless hosts SQLite may be unavailable; cookie fallback still works.
+  }
 
   return next;
 }

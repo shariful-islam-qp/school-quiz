@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as Partial<QuizSettings>;
     const settings = normalizeSettings(body);
 
-    const questions = generateQuizQuestions(settings);
+    const questions = await generateQuizQuestions(settings);
     if (questions.length === 0) {
       return NextResponse.json(
         { error: "No questions are available for this subject." },
@@ -21,16 +21,27 @@ export async function POST(request: Request) {
       );
     }
     const id = randomUUID();
-
-    saveSession({
+    const quizId = saveSession({
       id,
-      settings,
-      questions,
+      settings: {
+        subject: settings.subject,
+        timeLimitSeconds: settings.timeLimitSeconds,
+        questionCount: settings.questionCount,
+        maxNumber: settings.maxNumber,
+        operations: settings.operations,
+      },
+      questions: questions.map((question) => ({
+        id: question.id,
+        prompt: question.prompt,
+        options: question.options,
+        correctIndex: question.correctIndex,
+        correctAnswer: question.correctAnswer,
+      })),
       createdAt: Date.now(),
     });
 
     return NextResponse.json({
-      quizId: id,
+      quizId,
       subject: settings.subject,
       timeLimitSeconds: settings.timeLimitSeconds,
       questions: questions.map(toPublicQuestion),

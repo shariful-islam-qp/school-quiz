@@ -1,13 +1,31 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { getStoredPreferences, saveStoredPreferences } from "@/lib/db";
 import {
   normalizePreferences,
   type QuizPreferences,
 } from "@/lib/preferences";
+import {
+  readStoredPreferences,
+  writeStoredPreferences,
+} from "@/lib/settings-store";
+import {
+  preferencesFromCookieValue,
+  preferencesToCookieValue,
+  SETTINGS_COOKIE,
+  settingsCookieOptions,
+} from "@/lib/settings-cookie";
 
 export async function GET() {
   try {
-    return NextResponse.json(getStoredPreferences());
+    const jar = await cookies();
+    const fromCookie = preferencesFromCookieValue(
+      jar.get(SETTINGS_COOKIE)?.value,
+    );
+    if (fromCookie) {
+      return NextResponse.json(fromCookie);
+    }
+
+    return NextResponse.json(await readStoredPreferences());
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to load settings.";
@@ -27,7 +45,12 @@ export async function PUT(request: Request) {
       );
     }
 
-    return NextResponse.json(saveStoredPreferences(preferences));
+    const saved = await writeStoredPreferences(preferences);
+    const response = NextResponse.json(saved);
+    response.cookies.set(
+      settingsCookieOptions(preferencesToCookieValue(saved)),
+    );
+    return response;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to save settings.";

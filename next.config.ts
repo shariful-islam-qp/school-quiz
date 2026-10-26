@@ -1,9 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Smaller deployable server for low-RAM hosts
+  output: "standalone",
+  // Keep builds from spawning too many heavy workers
+  experimental: {
+    cpus: 1,
+    webpackMemoryOptimizations: true,
+  },
   turbopack: {
     rules: {
       "*.css": {

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: quiz-time
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:standalone
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=460
+      - key: PORT
+        value: "10000"

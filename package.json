@@ -4,9 +4,14 @@
 	"private": true,
 	"scripts": {
 		"dev": "next dev",
-		"build": "next build",
-		"start": "npm run build && next start",
+		"build": "NODE_OPTIONS='--max-old-space-size=450' next build && npm run build:standalone-assets",
+		"build:standalone-assets": "mkdir -p .next/standalone/.next && cp -R public .next/standalone/public && cp -R .next/static .next/standalone/.next/static",
+		"start": "NODE_OPTIONS='--max-old-space-size=450' next start",
+		"start:standalone": "NODE_OPTIONS='--max-old-space-size=450' node .next/standalone/server.js",
 		"lint": "eslint"
+	},
+	"engines": {
+		"node": ">=22"
 	},
 	"dependencies": {
 		"next": "16.4.3",

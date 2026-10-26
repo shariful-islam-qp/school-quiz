@@ -1,40 +1,61 @@
+import { createHmac, timingSafeEqual } from "crypto";
 import type { QuizSession } from "./types";
 
 const SESSION_TTL_MS = 60 * 60 * 1000;
 
-type GlobalStore = {
-  quizSessions?: Map<string, QuizSession>;
-};
-
-function getStore(): Map<string, QuizSession> {
-  const globalRef = globalThis as typeof globalThis & GlobalStore;
-  if (!globalRef.quizSessions) {
-    globalRef.quizSessions = new Map();
-  }
-  return globalRef.quizSessions;
+function getSecret(): string {
+  return (
+    process.env.QUIZ_SECRET ||
+    process.env.SESSION_SECRET ||
+    "dev-quiz-secret-change-me"
+  );
 }
 
-function pruneExpired(store: Map<string, QuizSession>) {
-  const now = Date.now();
-  for (const [id, session] of store) {
-    if (now - session.createdAt > SESSION_TTL_MS) {
-      store.delete(id);
+function sign(payload: string): string {
+  return createHmac("sha256", getSecret()).update(payload).digest("base64url");
+}
+
+export function saveSession(session: QuizSession): string {
+  const payload = Buffer.from(JSON.stringify(session), "utf8").toString(
+    "base64url",
+  );
+  return `${payload}.${sign(payload)}`;
+}
+
+export function getSession(token: string): QuizSession | undefined {
+  const parts = token.split(".");
+  if (parts.length !== 2) {
+    return undefined;
+  }
+
+  const [payload, signature] = parts;
+  const expected = sign(payload);
+  const left = Buffer.from(signature);
+  const right = Buffer.from(expected);
+
+  if (left.length !== right.length || !timingSafeEqual(left, right)) {
+    return undefined;
+  }
+
+  try {
+    const session = JSON.parse(
+      Buffer.from(payload, "base64url").toString("utf8"),
+    ) as QuizSession;
+
+    if (!session?.id || !Array.isArray(session.questions)) {
+      return undefined;
     }
+
+    if (Date.now() - session.createdAt > SESSION_TTL_MS) {
+      return undefined;
+    }
+
+    return session;
+  } catch {
+    return undefined;
   }
 }
 
-export function saveSession(session: QuizSession): void {
-  const store = getStore();
-  pruneExpired(store);
-  store.set(session.id, session);
-}
-
-export function getSession(id: string): QuizSession | undefined {
-  const store = getStore();
-  pruneExpired(store);
-  return store.get(id);
-}
-
-export function deleteSession(id: string): void {
-  getStore().delete(id);
+export function deleteSession(_token: string): void {
+  // Stateless signed sessions expire on their own.
 }
