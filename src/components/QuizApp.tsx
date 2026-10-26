@@ -6,9 +6,8 @@ import { SettingsScreen } from "@/components/SettingsScreen";
 import { QuizPlayer } from "@/components/QuizPlayer";
 import { ScoreScreen } from "@/components/ScoreScreen";
 import {
-  loadPreferences,
+  DEFAULT_PREFERENCES,
   preferencesToSettings,
-  savePreferences,
   type QuizPreferences,
 } from "@/lib/preferences";
 import type {
@@ -37,7 +36,33 @@ export function QuizApp() {
   const [score, setScore] = useState<ScoreResult | null>(null);
 
   useEffect(() => {
-    setPreferences(loadPreferences());
+    let cancelled = false;
+
+    async function loadSettings() {
+      try {
+        const response = await fetch("/api/settings");
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error ?? "Could not load settings.");
+        }
+        if (!cancelled) {
+          setPreferences(data as QuizPreferences);
+        }
+      } catch {
+        if (!cancelled) {
+          setPreferences({
+            ...DEFAULT_PREFERENCES,
+            operations: [...DEFAULT_PREFERENCES.operations],
+          });
+        }
+      }
+    }
+
+    void loadSettings();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function startQuiz() {
@@ -113,9 +138,19 @@ export function QuizApp() {
     setPhase("home");
   }
 
-  function handleSavePreferences(next: QuizPreferences) {
-    savePreferences(next);
-    setPreferences(next);
+  async function handleSavePreferences(next: QuizPreferences) {
+    const response = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(next),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error ?? "Could not save settings.");
+    }
+
+    setPreferences(data as QuizPreferences);
     setPhase("home");
   }
 

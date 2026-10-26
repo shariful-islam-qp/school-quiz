@@ -6,7 +6,7 @@ import type { QuizPreferences } from "@/lib/preferences";
 
 type SettingsScreenProps = {
   initialPreferences: QuizPreferences;
-  onSave: (preferences: QuizPreferences) => void;
+  onSave: (preferences: QuizPreferences) => Promise<void>;
   onBack: () => void;
 };
 
@@ -26,6 +26,7 @@ export function SettingsScreen({
     ...initialPreferences.operations,
   ]);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   function toggleOperation(operation: MathOperation) {
     setOperations((current) =>
@@ -35,7 +36,7 @@ export function SettingsScreen({
     );
   }
 
-  function handleSave(event: React.FormEvent) {
+  async function handleSave(event: React.FormEvent) {
     event.preventDefault();
 
     if (operations.length === 0) {
@@ -43,21 +44,29 @@ export function SettingsScreen({
       return;
     }
 
-    onSave({
-      maxNumber,
-      questionCount,
-      timeLimitSeconds,
-      operations,
-    });
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      await onSave({
+        maxNumber,
+        questionCount,
+        timeLimitSeconds,
+        operations,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save settings.");
+      setIsSaving(false);
+    }
   }
 
   return (
-    <form className="settings-screen panel pop-in" onSubmit={handleSave}>
+    <form className="settings-screen panel pop-in" onSubmit={(event) => void handleSave(event)}>
       <header className="settings-header">
         <p className="eyebrow">Settings</p>
         <h1>Quiz setup</h1>
         <p className="lede">
-          These apply to every quiz until you change them.
+          Saved in SQLite and used for every quiz.
         </p>
       </header>
 
@@ -129,11 +138,16 @@ export function SettingsScreen({
       {error ? <p className="error">{error}</p> : null}
 
       <div className="settings-actions">
-        <button type="button" className="secondary-btn" onClick={onBack}>
+        <button
+          type="button"
+          className="secondary-btn"
+          onClick={onBack}
+          disabled={isSaving}
+        >
           Back
         </button>
-        <button type="submit" className="primary-btn">
-          Save settings
+        <button type="submit" className="primary-btn" disabled={isSaving}>
+          {isSaving ? "Saving…" : "Save settings"}
         </button>
       </div>
     </form>

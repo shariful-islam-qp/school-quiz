@@ -127,17 +127,38 @@ input {
   color: var(--muted);
 }
 
-.home-top,
+.home-header,
 .settings-header,
 .score-screen header {
   margin-bottom: 1.35rem;
 }
 
-.home-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: flex-start;
+.home-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 0.75rem;
+}
+
+.home-summary-card {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 18px;
+  background: #fff8e8;
+  border: 2px dashed #f0d59a;
+}
+
+.settings-link-btn {
+  border: 0;
+  background: transparent;
+  color: var(--accent-deep);
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
 }
 
 .eyebrow {
@@ -276,7 +297,7 @@ h1 {
 }
 
 .home-summary {
-  margin: 0 0 1rem;
+  margin: 0;
   text-align: center;
   color: var(--muted);
   font-weight: 800;
@@ -788,7 +809,8 @@ fieldset.field {
     grid-template-columns: 1fr;
   }
 
-  .settings-actions {
+  .settings-actions,
+  .home-actions {
     grid-template-columns: 1fr;
   }
 
