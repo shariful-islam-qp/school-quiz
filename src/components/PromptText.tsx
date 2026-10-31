@@ -4,6 +4,10 @@ const ONE_EMOJI =
   /\p{Extended_Pictographic}️?(?:‍\p{Extended_Pictographic}️?)*/gu;
 const EMOJI_RUN = new RegExp(`((?:${ONE_EMOJI.source})+)`, "u");
 
+export function emojiCount(text: string): number {
+  return text.match(ONE_EMOJI)?.length ?? 0;
+}
+
 /** True for picture answers like "🐴" that should render large. */
 export function isEmojiOnly(value: string | number): boolean {
   return (
@@ -43,7 +47,7 @@ export function PromptText({ text }: { text: string }) {
     }
 
     // Counting rows (🍬🍬🍬🍬…) stay smaller so a group fits on one line
-    const isRow = (part.match(ONE_EMOJI)?.length ?? 0) > 3;
+    const isRow = emojiCount(part) > 3;
     return (
       <span
         key={index}

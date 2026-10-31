@@ -16,7 +16,12 @@ import {
   subscribeVoices,
 } from "@/lib/audio";
 import { swatchFor } from "@/lib/colors";
-import { isEmojiOnly, PromptText, promptShowsColor } from "./PromptText";
+import {
+  emojiCount,
+  isEmojiOnly,
+  PromptText,
+  promptShowsColor,
+} from "./PromptText";
 
 type ConfirmAction = "end" | "restart" | null;
 
@@ -178,6 +183,10 @@ export function QuizPlayer({
   const compactPrompt = banglaText || question.prompt.length > 16;
   // When the prompt shows the colour, the child must name it, so no swatches
   const showOptionSwatches = !promptShowsColor(question.prompt);
+  // Groups to compare ("🍎🍎🍎") share one size so no group looks bigger
+  const emojiRowOptions = question.options.some(
+    (option) => isEmojiOnly(option) && emojiCount(String(option)) > 1,
+  );
 
   function optionClass(optionIndex: number): string {
     if (!feedback) {
@@ -368,9 +377,11 @@ export function QuizPlayer({
               type="button"
               lang={banglaText ? "bn" : undefined}
               className={
-                isEmojiOnly(option)
-                  ? `${optionClass(optionIndex)} option-emoji`
-                  : optionClass(optionIndex)
+                !isEmojiOnly(option)
+                  ? optionClass(optionIndex)
+                  : emojiRowOptions
+                    ? `${optionClass(optionIndex)} option-emoji option-emoji-row`
+                    : `${optionClass(optionIndex)} option-emoji`
               }
               disabled={
                 Boolean(feedback) ||

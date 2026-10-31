@@ -6,6 +6,7 @@ import {
   normalizePreferences,
   type QuizPreferences,
 } from "./preferences";
+import { isMathOperation } from "./quiz";
 import type { MathOperation } from "./types";
 
 type SettingsRow = {
@@ -79,10 +80,7 @@ function rowToPreferences(row: SettingsRow): QuizPreferences {
   try {
     const parsed = JSON.parse(row.operations) as unknown;
     if (Array.isArray(parsed)) {
-      operations = parsed.filter(
-        (item): item is MathOperation =>
-          item === "addition" || item === "subtraction",
-      );
+      operations = parsed.filter(isMathOperation);
     }
   } catch {
     // keep defaults

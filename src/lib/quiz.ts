@@ -20,17 +20,27 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
-function compute(a: number, b: number, operation: MathOperation): number {
+type Arithmetic = Exclude<MathOperation, "numbers">;
+
+export function isMathOperation(value: unknown): value is MathOperation {
+  return value === "addition" || value === "subtraction" || value === "numbers";
+}
+
+function arithmeticOf(operations: MathOperation[]): Arithmetic[] {
+  return operations.filter((op): op is Arithmetic => op !== "numbers");
+}
+
+function compute(a: number, b: number, operation: Arithmetic): number {
   return operation === "addition" ? a + b : a - b;
 }
 
-function symbolFor(operation: MathOperation): string {
+function symbolFor(operation: Arithmetic): string {
   return operation === "addition" ? "+" : "−";
 }
 
 function pickOperands(
   maxNumber: number,
-  operation: MathOperation,
+  operation: Arithmetic,
 ): { a: number; b: number } {
   if (operation === "subtraction") {
     const a = randomInt(1, maxNumber);
@@ -69,25 +79,26 @@ function buildWrongOptions(
 
   while (wrong.size < 3) {
     const offset = randomInt(1, spread);
-    const candidate =
-      Math.random() < 0.5 ? correct + offset : Math.max(0, correct - offset);
-    if (candidate !== correct) {
-      wrong.add(candidate);
-    }
+    // Go up instead of clamping at 0, which made 0 a give-away option
+    const below = correct - offset;
+    wrong.add(Math.random() < 0.5 && below >= 0 ? below : correct + offset);
   }
 
   return [...wrong];
 }
 
-type MathFormat = "equation" | "missing" | "story" | "picture" | "match";
-
-const MATH_FORMATS: MathFormat[] = [
+const ARITHMETIC_FORMATS = [
   "equation",
   "missing",
   "story",
   "picture",
   "match",
-];
+] as const;
+
+const NUMBER_FORMATS = ["count", "compare", "order", "pattern", "more"] as const;
+
+type NumberFormat = (typeof NUMBER_FORMATS)[number];
+type MathFormat = (typeof ARITHMETIC_FORMATS)[number] | NumberFormat;
 
 type MathDraft = {
   prompt: string;
@@ -115,7 +126,7 @@ function pick<T>(items: T[]): T {
 function equationDraft(
   a: number,
   b: number,
-  operation: MathOperation,
+  operation: Arithmetic,
   maxNumber: number,
 ): MathDraft {
   const correct = compute(a, b, operation);
@@ -132,7 +143,7 @@ function equationDraft(
 function missingDraft(
   a: number,
   b: number,
-  operation: MathOperation,
+  operation: Arithmetic,
   maxNumber: number,
 ): MathDraft {
   const result = compute(a, b, operation);
@@ -153,7 +164,7 @@ function missingDraft(
 function storyDraft(
   a: number,
   b: number,
-  operation: MathOperation,
+  operation: Arithmetic,
   maxNumber: number,
 ): MathDraft {
   const item = pick(STORY_ITEMS);
@@ -183,7 +194,7 @@ function storyDraft(
 function pictureDraft(
   a: number,
   b: number,
-  operation: MathOperation,
+  operation: Arithmetic,
   maxNumber: number,
 ): MathDraft {
   const emoji = pick(STORY_ITEMS).emoji;
@@ -198,7 +209,7 @@ function pictureDraft(
 function matchDraft(
   a: number,
   b: number,
-  operation: MathOperation,
+  operation: Arithmetic,
   maxNumber: number,
 ): MathDraft {
   const target = compute(a, b, operation);
@@ -224,13 +235,119 @@ function matchDraft(
   };
 }
 
+function isNumberFormat(format: MathFormat): format is NumberFormat {
+  return (NUMBER_FORMATS as readonly MathFormat[]).includes(format);
+}
+
+function countDraft(maxNumber: number): MathDraft {
+  // Ten is about as many as a child can count at a glance
+  const limit = Math.min(maxNumber, 10);
+  const count = randomInt(1, limit);
+  return {
+    prompt: `How many? ${pick(STORY_ITEMS).emoji.repeat(count)}`,
+    correct: count,
+    wrong: buildWrongOptions(count, limit, [count + 1, count - 1]),
+  };
+}
+
+function compareDraft(top: number): MathDraft {
+  const biggest = Math.random() < 0.5;
+  const numbers = new Set<number>();
+  while (numbers.size < 4) {
+    numbers.add(randomInt(1, top));
+  }
+  const sorted = [...numbers].sort((x, y) => x - y);
+  const correct = biggest ? sorted[3] : sorted[0];
+  return {
+    prompt: `Which number is the ${biggest ? "biggest" : "smallest"}?`,
+    correct,
+    wrong: sorted.filter((n) => n !== correct),
+  };
+}
+
+function orderDraft(top: number): MathDraft {
+  const kind = pick(["after", "before", "between"] as const);
+  if (kind === "after") {
+    const n = randomInt(1, top - 1);
+    return {
+      prompt: `What comes after ${n}?`,
+      correct: n + 1,
+      wrong: buildWrongOptions(n + 1, top, [n - 1, n + 2]),
+    };
+  }
+  if (kind === "before") {
+    const n = randomInt(2, top);
+    return {
+      prompt: `What comes before ${n}?`,
+      correct: n - 1,
+      wrong: buildWrongOptions(n - 1, top, [n + 1, n - 2]),
+    };
+  }
+  const n = randomInt(2, top - 1);
+  return {
+    prompt: `What number is between ${n - 1} and ${n + 1}?`,
+    correct: n,
+    wrong: buildWrongOptions(n, top, [n + 2, n - 2]),
+  };
+}
+
+function patternDraft(top: number): MathDraft {
+  const steps = (top >= 50 ? [1, 2, 5, 10] : [1, 2]).filter(
+    (step) => 1 + step * 3 <= top,
+  );
+  const step = pick(steps.length > 0 ? steps : [1]);
+  const start = randomInt(1, Math.max(1, top - step * 3));
+  const [first, second, third] = [start, start + step, start + step * 2];
+  const correct = start + step * 3;
+  return {
+    prompt: `${first}, ${second}, ${third}, ?`,
+    correct,
+    // Common slips: counting on by one, or skipping a step
+    wrong: buildWrongOptions(correct, top, [third + 1, correct + step]),
+  };
+}
+
+function moreDraft(maxNumber: number): MathDraft {
+  const emoji = pick(STORY_ITEMS).emoji;
+  const sizes = shuffle(
+    Array.from({ length: Math.min(6, Math.max(maxNumber, 4)) }, (_, i) => i + 1),
+  ).slice(0, 4);
+  const most = Math.max(...sizes);
+  return {
+    prompt: "Which group has the most?",
+    correct: emoji.repeat(most),
+    wrong: sizes.filter((n) => n !== most).map((n) => emoji.repeat(n)),
+  };
+}
+
+function numberDraft(format: NumberFormat, maxNumber: number): MathDraft {
+  // Comparing and ordering need at least a handful of numbers to choose from
+  const top = Math.max(maxNumber, 5);
+  switch (format) {
+    case "count":
+      return countDraft(maxNumber);
+    case "compare":
+      return compareDraft(top);
+    case "order":
+      return orderDraft(top);
+    case "pattern":
+      return patternDraft(top);
+    case "more":
+      return moreDraft(maxNumber);
+  }
+}
+
 function buildDraft(
   format: MathFormat,
   settings: Pick<QuizSettings, "maxNumber" | "operations">,
 ): MathDraft {
-  const operation = pick(settings.operations);
-  const { a, b } = pickOperands(settings.maxNumber, operation);
   const { maxNumber } = settings;
+  if (isNumberFormat(format)) {
+    return numberDraft(format, maxNumber);
+  }
+
+  const operation = pick(arithmeticOf(settings.operations));
+  const { a, b } = pickOperands(maxNumber, operation);
 
   switch (format) {
     case "missing":
@@ -273,7 +390,10 @@ export function generateQuestion(
 
 function generateMathQuestions(settings: QuizSettings): StoredQuestion[] {
   // Rotate through a shuffled format list so every quiz mixes question styles
-  const formats = shuffle(MATH_FORMATS);
+  const formats = shuffle<MathFormat>([
+    ...(arithmeticOf(settings.operations).length > 0 ? ARITHMETIC_FORMATS : []),
+    ...(settings.operations.includes("numbers") ? NUMBER_FORMATS : []),
+  ]);
   const seen = new Set<string>();
   const questions: StoredQuestion[] = [];
 
@@ -348,7 +468,7 @@ export function normalizeSettings(input: Partial<QuizSettings>): QuizSettings {
   );
 
   const operations = (input.operations ?? DEFAULT_SETTINGS.operations).filter(
-    (op): op is MathOperation => op === "addition" || op === "subtraction",
+    isMathOperation,
   );
 
   if (subject === "math" && operations.length === 0) {

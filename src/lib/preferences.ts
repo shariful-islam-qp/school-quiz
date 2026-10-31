@@ -1,5 +1,5 @@
 import type { MathOperation, QuizSettings } from "./types";
-import { DEFAULT_SETTINGS } from "./quiz";
+import { DEFAULT_SETTINGS, isMathOperation } from "./quiz";
 
 export type QuizPreferences = {
   maxNumber: number;
@@ -14,10 +14,6 @@ export const DEFAULT_PREFERENCES: QuizPreferences = {
   timeLimitSeconds: DEFAULT_SETTINGS.timeLimitSeconds,
   questionCount: DEFAULT_SETTINGS.questionCount,
 };
-
-function isMathOperation(value: unknown): value is MathOperation {
-  return value === "addition" || value === "subtraction";
-}
 
 export function normalizePreferences(
   input: Partial<QuizPreferences> | null | undefined,

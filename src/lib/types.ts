@@ -1,6 +1,7 @@
 export type QuizSubject = "math" | "english" | "bangla";
 
-export type MathOperation = "addition" | "subtraction";
+/** "numbers" = number sense: counting, comparing, order and patterns */
+export type MathOperation = "addition" | "subtraction" | "numbers";
 
 export type QuizSettings = {
   subject: QuizSubject;

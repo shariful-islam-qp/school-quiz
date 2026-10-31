@@ -1,3 +1,9 @@
+import {
+  CATEGORY_PICTURES,
+  categoryDistractors,
+  type PictureCategory,
+  SIZE_TIERS,
+} from "./picture-groups";
 import type { StoredQuestion } from "./types";
 
 type BanglaWord = {
@@ -106,6 +112,43 @@ const NUMBERS = [
   { digit: "৮", word: "আট", count: 8 },
   { digit: "৯", word: "নয়", count: 9 },
   { digit: "১০", word: "দশ", count: 10 },
+  { digit: "১১", word: "এগারো", count: 11 },
+  { digit: "১২", word: "বারো", count: 12 },
+  { digit: "১৩", word: "তেরো", count: 13 },
+  { digit: "১৪", word: "চৌদ্দ", count: 14 },
+  { digit: "১৫", word: "পনেরো", count: 15 },
+  { digit: "১৬", word: "ষোলো", count: 16 },
+  { digit: "১৭", word: "সতেরো", count: 17 },
+  { digit: "১৮", word: "আঠারো", count: 18 },
+  { digit: "১৯", word: "উনিশ", count: 19 },
+  { digit: "২০", word: "বিশ", count: 20 },
+];
+
+const ANIMAL_SOUNDS = [
+  { emoji: "🐄", sound: "হাম্বা" },
+  { emoji: "🐶", sound: "ঘেউ ঘেউ" },
+  { emoji: "🐈", sound: "মিউ মিউ" },
+  { emoji: "🐐", sound: "ম্যা ম্যা" },
+  { emoji: "🦆", sound: "প্যাঁক প্যাঁক" },
+  { emoji: "🐓", sound: "কুকুরু কু" },
+  { emoji: "🦊", sound: "হুক্কা হুয়া" },
+];
+
+const CATEGORY_PROMPTS: Record<PictureCategory, string> = {
+  fruit: "কোনটি ফল?",
+  animal: "কোনটি প্রাণী?",
+  bird: "কোনটি পাখি?",
+  vehicle: "কোনটি যানবাহন?",
+};
+
+const OPPOSITES = [
+  ["গরম", "ঠান্ডা"],
+  ["বড়", "ছোট"],
+  ["উপর", "নিচ"],
+  ["দিন", "রাত"],
+  ["হাসি", "কান্না"],
+  ["আলো", "অন্ধকার"],
+  ["ভালো", "মন্দ"],
 ];
 
 const COLORS = [
@@ -322,6 +365,125 @@ function missingLetterDrafts(alphabet: string[]): BanglaDraft[] {
   return drafts;
 }
 
+function numberOrderDrafts(): BanglaDraft[] {
+  const digits = NUMBERS.map((item) => item.digit);
+  const drafts: BanglaDraft[] = [];
+
+  for (let index = 0; index < digits.length; index += 1) {
+    const digit = digits[index];
+    if (index + 3 < digits.length) {
+      drafts.push({
+        prompt: `${digits.slice(index, index + 3).join(", ")}, ?`,
+        correct: digits[index + 3],
+        distractors: uniqueOthers(digits, digits[index + 3]),
+      });
+    }
+    if (index + 1 < digits.length) {
+      drafts.push({
+        prompt: `${digit} এর পরে কোন সংখ্যা?`,
+        correct: digits[index + 1],
+        distractors: uniqueOthers(digits, digits[index + 1]),
+      });
+    }
+    if (index > 0) {
+      drafts.push({
+        prompt: `${digit} এর আগে কোন সংখ্যা?`,
+        correct: digits[index - 1],
+        distractors: uniqueOthers(digits, digits[index - 1]),
+      });
+    }
+  }
+
+  return drafts;
+}
+
+function biggestNumberDrafts(): BanglaDraft[] {
+  return Array.from({ length: 8 }, () => {
+    const picked = shuffle(NUMBERS)
+      .slice(0, 4)
+      .sort((x, y) => x.count - y.count)
+      .map((item) => item.digit);
+    const biggest = Math.random() < 0.5;
+    const correct = biggest ? picked[3] : picked[0];
+    return {
+      prompt: `কোন সংখ্যাটি সবচেয়ে ${biggest ? "বড়" : "ছোট"}?`,
+      correct,
+      distractors: picked.filter((digit) => digit !== correct),
+    };
+  });
+}
+
+// Bangla letters (vowels and consonants), as opposed to vowel signs and marks
+const BANGLA_LETTER = /[অ-হড়-য়]/;
+
+function missingFirstLetterDrafts(): BanglaDraft[] {
+  const letters = [...new Set(WORDS.map((item) => item.letter))];
+
+  // Only words whose first letter stands alone: "কলা" → "_লা", not "ঘোড়া"
+  return WORDS.filter(
+    (item) =>
+      !item.alt &&
+      item.word.startsWith(item.letter) &&
+      BANGLA_LETTER.test(item.word.charAt(item.letter.length)),
+  ).map((item) => ({
+    prompt: `${item.emoji} _${item.word.slice(item.letter.length)} — কোন অক্ষর বসবে?`,
+    correct: item.letter,
+    distractors: letters.filter((letter) => letter !== item.letter),
+  }));
+}
+
+function animalSoundDrafts(): BanglaDraft[] {
+  return ANIMAL_SOUNDS.map((item) => ({
+    prompt: `কোন প্রাণী "${item.sound}" ডাকে?`,
+    correct: item.emoji,
+    distractors: uniqueOthers(
+      ANIMAL_SOUNDS.map((other) => other.emoji),
+      item.emoji,
+    ),
+  }));
+}
+
+function categoryDrafts(): BanglaDraft[] {
+  return (Object.keys(CATEGORY_PICTURES) as PictureCategory[]).flatMap(
+    (category) =>
+      CATEGORY_PICTURES[category].map((emoji) => ({
+        // Same prompt per category; takeDrafts keeps only one of each
+        prompt: CATEGORY_PROMPTS[category],
+        correct: emoji,
+        distractors: categoryDistractors(category),
+      })),
+  );
+}
+
+function sizeDrafts(): BanglaDraft[] {
+  const smallest = SIZE_TIERS[0];
+  const biggest = SIZE_TIERS[SIZE_TIERS.length - 1];
+  return [
+    ...biggest.map((emoji) => ({
+      prompt: "কোনটি সবচেয়ে বড়?",
+      correct: emoji,
+      distractors: SIZE_TIERS.slice(0, -1).flat(),
+    })),
+    ...smallest.map((emoji) => ({
+      prompt: "কোনটি সবচেয়ে ছোট?",
+      correct: emoji,
+      distractors: SIZE_TIERS.slice(1).flat(),
+    })),
+  ];
+}
+
+function oppositeDrafts(): BanglaDraft[] {
+  const words = OPPOSITES.flat();
+  return OPPOSITES.flatMap(([a, b]) => [
+    [a, b],
+    [b, a],
+  ]).map(([word, opposite]) => ({
+    prompt: `"${word}" এর বিপরীত শব্দ কী?`,
+    correct: opposite,
+    distractors: words.filter((other) => other !== word && other !== opposite),
+  }));
+}
+
 function takeDrafts(count: number): BanglaDraft[] {
   // Build only a small sample per type so serverless memory stays low
   const perBucket = Math.max(2, Math.ceil(count / 4));
@@ -342,6 +504,13 @@ function takeDrafts(count: number): BanglaDraft[] {
     shuffle(bodyPartDrafts()).slice(0, perBucket),
     shuffle(missingLetterDrafts(VOWELS)).slice(0, perBucket),
     shuffle(missingLetterDrafts(CONSONANTS)).slice(0, perBucket),
+    shuffle(numberOrderDrafts()).slice(0, perBucket),
+    shuffle(biggestNumberDrafts()).slice(0, perBucket),
+    shuffle(missingFirstLetterDrafts()).slice(0, perBucket),
+    shuffle(animalSoundDrafts()).slice(0, perBucket),
+    shuffle(categoryDrafts()).slice(0, perBucket),
+    shuffle(sizeDrafts()).slice(0, perBucket),
+    shuffle(oppositeDrafts()).slice(0, perBucket),
   ]);
 
   const picked: BanglaDraft[] = [];

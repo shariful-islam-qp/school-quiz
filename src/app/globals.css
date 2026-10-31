@@ -656,6 +656,12 @@ fieldset.field {
   line-height: 1.1;
 }
 
+.option-btn.option-emoji-row {
+  padding: 1rem 0.75rem;
+  font-size: 1.8rem;
+  letter-spacing: 0.05em;
+}
+
 .quiz-sound-btn {
   margin-right: auto;
   font-size: 1.05rem;

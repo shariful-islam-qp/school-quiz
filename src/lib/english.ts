@@ -1,3 +1,9 @@
+import {
+  CATEGORY_PICTURES,
+  categoryDistractors,
+  type PictureCategory,
+  SIZE_TIERS,
+} from "./picture-groups";
 import type { StoredQuestion } from "./types";
 
 type EnglishDraft = {
@@ -9,19 +15,82 @@ type EnglishDraft = {
 const CAPITALS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const SMALLS = "abcdefghijklmnopqrstuvwxyz".split("");
 
-const WORDS = [
+type EnglishWord = {
+  emoji: string;
+  word: string;
+  /** First letters of other names a child might give the picture (🐶 → Puppy) */
+  alt?: string[];
+};
+
+// A–Z picture words (no X: there is no clear picture for it)
+const WORDS: EnglishWord[] = [
   { emoji: "🍎", word: "Apple" },
   { emoji: "⚽", word: "Ball" },
-  { emoji: "🐈", word: "Cat" },
-  { emoji: "🐶", word: "Dog" },
-  { emoji: "🥭", word: "Mango" },
-  { emoji: "📖", word: "Book" },
   { emoji: "🍌", word: "Banana" },
+  { emoji: "📖", word: "Book" },
+  { emoji: "🐈", word: "Cat", alt: ["K"] },
+  { emoji: "🐶", word: "Dog", alt: ["P"] },
+  { emoji: "🥚", word: "Egg" },
   { emoji: "🐟", word: "Fish" },
+  { emoji: "🐐", word: "Goat" },
+  { emoji: "🎩", word: "Hat", alt: ["C"] },
   { emoji: "🏠", word: "House" },
-  { emoji: "🌳", word: "Tree" },
-  { emoji: "☀️", word: "Sun" },
+  { emoji: "🍦", word: "Ice cream", alt: ["C"] },
+  { emoji: "🧃", word: "Juice", alt: ["D", "B"] },
+  { emoji: "🪁", word: "Kite" },
+  { emoji: "🦁", word: "Lion" },
+  { emoji: "🥭", word: "Mango" },
   { emoji: "🌙", word: "Moon" },
+  { emoji: "👃", word: "Nose" },
+  { emoji: "🍊", word: "Orange" },
+  { emoji: "🐷", word: "Pig" },
+  { emoji: "👸", word: "Queen", alt: ["P"] },
+  { emoji: "🐇", word: "Rabbit", alt: ["B"] },
+  { emoji: "☀️", word: "Sun" },
+  { emoji: "🌳", word: "Tree" },
+  { emoji: "☂️", word: "Umbrella" },
+  { emoji: "🚐", word: "Van", alt: ["B", "C"] },
+  { emoji: "⌚", word: "Watch", alt: ["C"] },
+  { emoji: "🪀", word: "Yo-yo" },
+  { emoji: "🦓", word: "Zebra" },
+];
+
+const BODY_PARTS = [
+  { emoji: "👁️", word: "Eye" },
+  { emoji: "👂", word: "Ear" },
+  { emoji: "👃", word: "Nose" },
+  { emoji: "👄", word: "Mouth" },
+  { emoji: "✋", word: "Hand" },
+  { emoji: "🦶", word: "Foot" },
+];
+
+const ANIMAL_SOUNDS = [
+  { emoji: "🐄", sound: "Moo" },
+  { emoji: "🐶", sound: "Woof" },
+  { emoji: "🐈", sound: "Meow" },
+  { emoji: "🐑", sound: "Baa" },
+  { emoji: "🦆", sound: "Quack" },
+  { emoji: "🐓", sound: "Cock-a-doodle-doo" },
+  { emoji: "🦁", sound: "Roar" },
+  { emoji: "🐷", sound: "Oink" },
+];
+
+const CATEGORY_PROMPTS: Record<PictureCategory, string> = {
+  fruit: "Which one is a fruit?",
+  animal: "Which one is an animal?",
+  bird: "Which one is a bird?",
+  vehicle: "Which one is a vehicle?",
+};
+
+const OPPOSITES = [
+  ["hot", "cold"],
+  ["big", "small"],
+  ["up", "down"],
+  ["day", "night"],
+  ["happy", "sad"],
+  ["fast", "slow"],
+  ["tall", "short"],
+  ["open", "closed"],
 ];
 
 const COLOURS = [
@@ -150,6 +219,96 @@ function shapeDrafts(): EnglishDraft[] {
   }));
 }
 
+// Options are pictures, so skip any picture that could also start with the letter
+function startsWithDrafts(): EnglishDraft[] {
+  const letters = [...new Set(WORDS.map((item) => item.word[0]))];
+
+  return letters.map((letter) => {
+    const words = WORDS.filter((item) => item.word[0] === letter);
+    const clear = words.filter((item) => !item.alt);
+    const choices = clear.length > 0 ? clear : words;
+    const correct = choices[randomInt(0, choices.length - 1)].emoji;
+    return {
+      prompt: `Which one starts with “${letter}”?`,
+      correct,
+      distractors: WORDS.filter(
+        (item) => item.word[0] !== letter && !item.alt?.includes(letter),
+      ).map((item) => item.emoji),
+    };
+  });
+}
+
+function firstLetterDrafts(): EnglishDraft[] {
+  return WORDS.filter((item) => !item.alt).map((item) => ({
+    prompt: `What letter does this start with? ${item.emoji}`,
+    correct: item.word[0],
+    distractors: uniqueOthers(CAPITALS, item.word[0]),
+  }));
+}
+
+function bodyPartDrafts(): EnglishDraft[] {
+  return BODY_PARTS.map((item) => ({
+    prompt: `What is this? ${item.emoji}`,
+    correct: item.word,
+    distractors: uniqueOthers(
+      BODY_PARTS.map((other) => other.word),
+      item.word,
+    ),
+  }));
+}
+
+function animalSoundDrafts(): EnglishDraft[] {
+  return ANIMAL_SOUNDS.map((item) => ({
+    prompt: `Which animal says “${item.sound}”?`,
+    correct: item.emoji,
+    distractors: uniqueOthers(
+      ANIMAL_SOUNDS.map((other) => other.emoji),
+      item.emoji,
+    ),
+  }));
+}
+
+function categoryDrafts(): EnglishDraft[] {
+  return (Object.keys(CATEGORY_PICTURES) as PictureCategory[]).flatMap(
+    (category) =>
+      CATEGORY_PICTURES[category].map((emoji) => ({
+        // Same prompt per category; takeDrafts keeps only one of each
+        prompt: CATEGORY_PROMPTS[category],
+        correct: emoji,
+        distractors: categoryDistractors(category),
+      })),
+  );
+}
+
+function sizeDrafts(): EnglishDraft[] {
+  const smallest = SIZE_TIERS[0];
+  const biggest = SIZE_TIERS[SIZE_TIERS.length - 1];
+  return [
+    ...biggest.map((emoji) => ({
+      prompt: "Which animal is the biggest?",
+      correct: emoji,
+      distractors: SIZE_TIERS.slice(0, -1).flat(),
+    })),
+    ...smallest.map((emoji) => ({
+      prompt: "Which animal is the smallest?",
+      correct: emoji,
+      distractors: SIZE_TIERS.slice(1).flat(),
+    })),
+  ];
+}
+
+function oppositeDrafts(): EnglishDraft[] {
+  const words = OPPOSITES.flat();
+  return OPPOSITES.flatMap(([a, b]) => [
+    [a, b],
+    [b, a],
+  ]).map(([word, opposite]) => ({
+    prompt: `What is the opposite of “${word}”?`,
+    correct: opposite,
+    distractors: words.filter((other) => other !== word && other !== opposite),
+  }));
+}
+
 function takeDrafts(count: number): EnglishDraft[] {
   const perBucket = Math.max(2, Math.ceil(count / 3));
   const buckets = shuffle([
@@ -161,6 +320,13 @@ function takeDrafts(count: number): EnglishDraft[] {
     shuffle(vocabularyDrafts()).slice(0, perBucket),
     shuffle(colourDrafts()).slice(0, perBucket),
     shuffle(shapeDrafts()).slice(0, perBucket),
+    shuffle(startsWithDrafts()).slice(0, perBucket),
+    shuffle(firstLetterDrafts()).slice(0, perBucket),
+    shuffle(bodyPartDrafts()).slice(0, perBucket),
+    shuffle(animalSoundDrafts()).slice(0, perBucket),
+    shuffle(categoryDrafts()).slice(0, perBucket),
+    shuffle(sizeDrafts()).slice(0, perBucket),
+    shuffle(oppositeDrafts()).slice(0, perBucket),
   ]);
 
   const picked: EnglishDraft[] = [];

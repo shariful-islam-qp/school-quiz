@@ -131,6 +131,14 @@ export function SettingsScreen({
               />
               Subtraction (−)
             </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={operations.includes("numbers")}
+                onChange={() => toggleOperation("numbers")}
+              />
+              Numbers (count, compare, order)
+            </label>
           </div>
         </fieldset>
       </div>
