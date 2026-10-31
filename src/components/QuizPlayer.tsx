@@ -1,11 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type {
   AnswerSubmission,
   PublicQuestion,
   QuestionResult,
 } from "@/lib/types";
+import {
+  canSpeak,
+  isMuted,
+  playSound,
+  setMuted,
+  speak,
+  stopSpeaking,
+  subscribeVoices,
+} from "@/lib/audio";
+import { swatchFor } from "@/lib/colors";
+import { isEmojiOnly, PromptText, promptShowsColor } from "./PromptText";
 
 type ConfirmAction = "end" | "restart" | null;
 
@@ -36,6 +47,7 @@ export function QuizPlayer({
   const [isFinishing, setIsFinishing] = useState(false);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
   const [error, setError] = useState<string | null>(null);
+  const [muted, setMutedState] = useState(isMuted);
 
   const answersRef = useRef<AnswerSubmission[]>([]);
   const resultsRef = useRef<QuestionResult[]>([]);
@@ -49,6 +61,13 @@ export function QuizPlayer({
   const question = questions[index];
   const timerPaused =
     Boolean(feedback) || isChecking || isFinishing || Boolean(confirmAction);
+  const canReadAloud = useSyncExternalStore(
+    subscribeVoices,
+    () => canSpeak(question.prompt),
+    () => false,
+  );
+
+  useEffect(() => stopSpeaking, []);
 
   useEffect(() => {
     lockedRef.current = false;
@@ -117,6 +136,7 @@ export function QuizPlayer({
       ];
       resultsRef.current = [...resultsRef.current, result];
       setFeedback(result);
+      playSound(result.isCorrect ? "correct" : "wrong");
     } catch (err) {
       lockedRef.current = false;
       setError(err instanceof Error ? err.message : "Could not check answer.");
@@ -130,8 +150,11 @@ export function QuizPlayer({
       return;
     }
 
+    stopSpeaking();
+
     if (index >= questions.length - 1) {
       setIsFinishing(true);
+      playSound("finish");
       await onComplete(answersRef.current, resultsRef.current);
       return;
     }
@@ -153,6 +176,8 @@ export function QuizPlayer({
   const banglaText = /[\u0980-\u09FF]/.test(question.prompt);
   // Word problems and emoji rows wrap badly at the big equation size
   const compactPrompt = banglaText || question.prompt.length > 16;
+  // When the prompt shows the colour, the child must name it, so no swatches
+  const showOptionSwatches = !promptShowsColor(question.prompt);
 
   function optionClass(optionIndex: number): string {
     if (!feedback) {
@@ -202,6 +227,18 @@ export function QuizPlayer({
       <div className="quiz-toolbar">
         <button
           type="button"
+          className="quiz-tool-btn quiz-sound-btn"
+          aria-label={muted ? "Turn sound on" : "Turn sound off"}
+          aria-pressed={!muted}
+          onClick={() => {
+            setMuted(!muted);
+            setMutedState(!muted);
+          }}
+        >
+          {muted ? "🔇" : "🔊"}
+        </button>
+        <button
+          type="button"
           className="quiz-tool-btn"
           onClick={() => setConfirmAction("end")}
           disabled={isFinishing}
@@ -222,6 +259,15 @@ export function QuizPlayer({
         <span>
           Question {index + 1} of {questions.length}
         </span>
+        {canReadAloud ? (
+          <button
+            type="button"
+            className="quiz-tool-btn"
+            onClick={() => speak(question.prompt)}
+          >
+            🗣️ Read
+          </button>
+        ) : null}
       </div>
 
       <div
@@ -310,27 +356,45 @@ export function QuizPlayer({
         lang={banglaText ? "bn" : undefined}
         className={compactPrompt ? "prompt prompt-compact" : "prompt"}
       >
-        {question.prompt}
+        <PromptText text={question.prompt} />
       </h2>
 
       <div className="options-grid">
-        {question.options.map((option, optionIndex) => (
-          <button
-            key={`${question.id}-${option}-${optionIndex}`}
-            type="button"
-            lang={banglaText ? "bn" : undefined}
-            className={optionClass(optionIndex)}
-            disabled={
-              Boolean(feedback) ||
-              isChecking ||
-              isFinishing ||
-              Boolean(confirmAction)
-            }
-            onClick={() => void submitAnswer(optionIndex)}
-          >
-            {option}
-          </button>
-        ))}
+        {question.options.map((option, optionIndex) => {
+          const swatch = showOptionSwatches ? swatchFor(option) : null;
+          return (
+            <button
+              key={`${question.id}-${option}-${optionIndex}`}
+              type="button"
+              lang={banglaText ? "bn" : undefined}
+              className={
+                isEmojiOnly(option)
+                  ? `${optionClass(optionIndex)} option-emoji`
+                  : optionClass(optionIndex)
+              }
+              disabled={
+                Boolean(feedback) ||
+                isChecking ||
+                isFinishing ||
+                Boolean(confirmAction)
+              }
+              onClick={() => void submitAnswer(optionIndex)}
+            >
+              {swatch ? (
+                <span className="option-color">
+                  <span
+                    className="color-swatch color-swatch-option"
+                    style={{ background: swatch }}
+                    aria-hidden
+                  />
+                  {option}
+                </span>
+              ) : (
+                option
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {isChecking ? <p className="status">Checking…</p> : null}

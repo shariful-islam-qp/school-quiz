@@ -5,6 +5,8 @@ type BanglaWord = {
   word: string;
   letter: string;
   genitive: string;
+  /** Letters of other names a child might give the picture (🏠 → ঘর) */
+  alt?: string[];
 };
 
 type BanglaDraft = {
@@ -14,45 +16,45 @@ type BanglaDraft = {
 };
 
 const WORDS: BanglaWord[] = [
-  { emoji: "🐍", word: "অজগর", letter: "অ", genitive: "অজগরের" },
-  { emoji: "🍎", word: "আম", letter: "আ", genitive: "আমের" },
-  { emoji: "☁️", word: "আকাশ", letter: "আ", genitive: "আকাশের" },
+  { emoji: "🐍", word: "অজগর", letter: "অ", genitive: "অজগরের", alt: ["স"] },
+  { emoji: "🥭", word: "আম", letter: "আ", genitive: "আমের" },
+  { emoji: "☁️", word: "আকাশ", letter: "আ", genitive: "আকাশের", alt: ["ম"] },
   { emoji: "🍍", word: "আনারস", letter: "আ", genitive: "আনারসের" },
-  { emoji: "🐠", word: "ইলিশ", letter: "ই", genitive: "ইলিশের" },
+  { emoji: "🍎", word: "আপেল", letter: "আ", genitive: "আপেলের" },
+  { emoji: "🐠", word: "ইলিশ", letter: "ই", genitive: "ইলিশের", alt: ["ম"] },
   { emoji: "🐁", word: "ইঁদুর", letter: "ই", genitive: "ইঁদুরের" },
   { emoji: "🦅", word: "ঈগল", letter: "ঈ", genitive: "ঈগলের" },
   { emoji: "🐪", word: "উট", letter: "উ", genitive: "উটের" },
   { emoji: "🍌", word: "কলা", letter: "ক", genitive: "কলার" },
-  { emoji: "✏️", word: "কলম", letter: "ক", genitive: "কলমের" },
+  { emoji: "🖊️", word: "কলম", letter: "ক", genitive: "কলমের" },
   { emoji: "🐶", word: "কুকুর", letter: "ক", genitive: "কুকুরের" },
   { emoji: "🐈", word: "বিড়াল", letter: "ব", genitive: "বিড়ালের" },
   { emoji: "🐇", word: "খরগোশ", letter: "খ", genitive: "খরগোশের" },
-  { emoji: "📒", word: "খাতা", letter: "খ", genitive: "খাতার" },
+  { emoji: "📒", word: "খাতা", letter: "খ", genitive: "খাতার", alt: ["ব"] },
   { emoji: "🐄", word: "গরু", letter: "গ", genitive: "গরুর" },
-  { emoji: "🌹", word: "গোলাপ", letter: "গ", genitive: "গোলাপের" },
+  { emoji: "🌹", word: "গোলাপ", letter: "গ", genitive: "গোলাপের", alt: ["ফ"] },
   { emoji: "🐴", word: "ঘোড়া", letter: "ঘ", genitive: "ঘোড়ার" },
   { emoji: "⏰", word: "ঘড়ি", letter: "ঘ", genitive: "ঘড়ির" },
   { emoji: "🌙", word: "চাঁদ", letter: "চ", genitive: "চাঁদের" },
   { emoji: "☂️", word: "ছাতা", letter: "ছ", genitive: "ছাতার" },
   { emoji: "🚢", word: "জাহাজ", letter: "জ", genitive: "জাহাজের" },
   { emoji: "🥚", word: "ডিম", letter: "ড", genitive: "ডিমের" },
-  { emoji: "🌴", word: "তাল", letter: "ত", genitive: "তালের" },
+  { emoji: "🌴", word: "তাল", letter: "ত", genitive: "তালের", alt: ["ন", "গ"] },
   { emoji: "⛵", word: "নৌকা", letter: "ন", genitive: "নৌকার" },
   { emoji: "🐦", word: "পাখি", letter: "প", genitive: "পাখির" },
   { emoji: "🌸", word: "ফুল", letter: "ফ", genitive: "ফুলের" },
-  { emoji: "📖", word: "বই", letter: "ব", genitive: "বইয়ের" },
-  { emoji: "🏠", word: "বাড়ি", letter: "ব", genitive: "বাড়ির" },
+  { emoji: "📖", word: "বই", letter: "ব", genitive: "বইয়ের", alt: ["খ"] },
+  { emoji: "🏠", word: "বাড়ি", letter: "ব", genitive: "বাড়ির", alt: ["ঘ"] },
   { emoji: "⚽", word: "বল", letter: "ব", genitive: "বলের" },
   { emoji: "🐟", word: "মাছ", letter: "ম", genitive: "মাছের" },
-  { emoji: "🥭", word: "আমড়া", letter: "আ", genitive: "আমড়ার" },
-  { emoji: "👑", word: "রাজা", letter: "র", genitive: "রাজার" },
+  { emoji: "👑", word: "রাজা", letter: "র", genitive: "রাজার", alt: ["ম"] },
   { emoji: "🍋", word: "লেবু", letter: "ল", genitive: "লেবুর" },
-  { emoji: "🪷", word: "শাপলা", letter: "শ", genitive: "শাপলার" },
+  { emoji: "🪷", word: "শাপলা", letter: "শ", genitive: "শাপলার", alt: ["প", "ফ"] },
   { emoji: "☀️", word: "সূর্য", letter: "স", genitive: "সূর্যের" },
   { emoji: "🦁", word: "সিংহ", letter: "স", genitive: "সিংহের" },
   { emoji: "🐘", word: "হাতি", letter: "হ", genitive: "হাতির" },
   { emoji: "🐐", word: "ছাগল", letter: "ছ", genitive: "ছাগলের" },
-  { emoji: "💧", word: "পানি", letter: "প", genitive: "পানির" },
+  { emoji: "💧", word: "পানি", letter: "প", genitive: "পানির", alt: ["জ"] },
   { emoji: "🥛", word: "দুধ", letter: "দ", genitive: "দুধের" },
 ];
 
@@ -183,21 +185,29 @@ function pictureDrafts(): BanglaDraft[] {
 }
 
 function wordFromLetterDrafts(): BanglaDraft[] {
-  const byLetter = new Map<string, string[]>();
+  const byLetter = new Map<string, BanglaWord[]>();
   for (const item of WORDS) {
     const words = byLetter.get(item.letter) ?? [];
-    words.push(item.word);
+    words.push(item);
     byLetter.set(item.letter, words);
   }
 
-  return [...byLetter.entries()].map(([letter, words]) => ({
-    prompt: `${letter} দিয়ে একটি শব্দ বলো।`,
-    correct: words[0],
-    distractors: uniqueOthers(
-      WORDS.filter((item) => item.letter !== letter).map((item) => item.word),
-      words[0],
-    ),
-  }));
+  // Options are pictures, so skip any picture that could also start with the letter
+  return [...byLetter.entries()].map(([letter, words]) => {
+    const clear = words.filter((item) => !item.alt);
+    const choices = clear.length > 0 ? clear : words;
+    const correct = choices[randomInt(0, choices.length - 1)].emoji;
+    return {
+      prompt: `কোনটির নাম ${letter} দিয়ে শুরু?`,
+      correct,
+      distractors: uniqueOthers(
+        WORDS.filter(
+          (item) => item.letter !== letter && !item.alt?.includes(letter),
+        ).map((item) => item.emoji),
+        correct,
+      ),
+    };
+  });
 }
 
 function firstLetterDrafts(): BanglaDraft[] {

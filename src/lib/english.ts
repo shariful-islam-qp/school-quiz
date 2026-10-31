@@ -80,36 +80,28 @@ function alphabetSequenceDrafts(): EnglishDraft[] {
   return drafts;
 }
 
+// Show one case and ask for the other. The same letter in the shown case is
+// always a distractor, so the child has to tell capital and small apart.
 function identifyCapitalDrafts(): EnglishDraft[] {
-  return CAPITALS.map((letter, index) => {
-    const nearbySmalls = shuffle(
-      SMALLS.filter((item) => item !== SMALLS[index]),
-    ).slice(0, 2);
-    return {
-      prompt: `Which one is capital letter ${letter}?`,
-      correct: letter,
-      distractors: uniqueOthers(
-        [SMALLS[index], ...nearbySmalls, ...CAPITALS],
-        letter,
-      ),
-    };
-  });
+  return CAPITALS.map((letter, index) => ({
+    prompt: `Find the capital letter for “${SMALLS[index]}”`,
+    correct: letter,
+    distractors: [
+      SMALLS[index],
+      ...shuffle(uniqueOthers(CAPITALS, letter)).slice(0, 2),
+    ],
+  }));
 }
 
 function identifySmallDrafts(): EnglishDraft[] {
-  return SMALLS.map((letter, index) => {
-    const nearbyCapitals = shuffle(
-      CAPITALS.filter((item) => item !== CAPITALS[index]),
-    ).slice(0, 2);
-    return {
-      prompt: `Which one is small letter ${letter}?`,
-      correct: letter,
-      distractors: uniqueOthers(
-        [CAPITALS[index], ...nearbyCapitals, ...SMALLS],
-        letter,
-      ),
-    };
-  });
+  return SMALLS.map((letter, index) => ({
+    prompt: `Find the small letter for “${CAPITALS[index]}”`,
+    correct: letter,
+    distractors: [
+      CAPITALS[index],
+      ...shuffle(uniqueOthers(SMALLS, letter)).slice(0, 2),
+    ],
+  }));
 }
 
 function afterLetterDrafts(): EnglishDraft[] {
@@ -125,14 +117,6 @@ function beforeLetterDrafts(): EnglishDraft[] {
     prompt: `What comes before ${letter}?`,
     correct: CAPITALS[index],
     distractors: uniqueOthers(CAPITALS, CAPITALS[index]),
-  }));
-}
-
-function caseMatchDrafts(): EnglishDraft[] {
-  return CAPITALS.map((letter, index) => ({
-    prompt: `Find the small letter for ${letter}.`,
-    correct: SMALLS[index],
-    distractors: uniqueOthers(SMALLS, SMALLS[index]),
   }));
 }
 
@@ -174,7 +158,6 @@ function takeDrafts(count: number): EnglishDraft[] {
     shuffle(identifySmallDrafts()).slice(0, perBucket),
     shuffle(afterLetterDrafts()).slice(0, perBucket),
     shuffle(beforeLetterDrafts()).slice(0, perBucket),
-    shuffle(caseMatchDrafts()).slice(0, perBucket),
     shuffle(vocabularyDrafts()).slice(0, perBucket),
     shuffle(colourDrafts()).slice(0, perBucket),
     shuffle(shapeDrafts()).slice(0, perBucket),

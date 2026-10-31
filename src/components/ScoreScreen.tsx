@@ -1,6 +1,21 @@
 "use client";
 
 import type { QuizChoice, ScoreResult } from "@/lib/types";
+import { swatchFor } from "@/lib/colors";
+import { ColorChip, PromptText } from "./PromptText";
+
+function AnswerText({ value }: { value: QuizChoice | null }) {
+  if (value === null) {
+    return "—";
+  }
+  const swatch = swatchFor(value);
+  return (
+    <>
+      {swatch ? <ColorChip color={swatch} /> : null}
+      {value}
+    </>
+  );
+}
 
 function answerLang(value: QuizChoice | null): "bn" | undefined {
   return typeof value === "string" && /[\u0980-\u09FF]/.test(value)
@@ -37,7 +52,7 @@ export function ScoreScreen({ result, onPlayAgain }: ScoreScreenProps) {
           >
             <div className="result-top">
               <strong lang={/[\u0980-\u09FF]/.test(item.prompt) ? "bn" : undefined}>
-                Q{index + 1}. {item.prompt}
+                Q{index + 1}. <PromptText text={item.prompt} />
               </strong>
               <span className="result-badge">
                 {item.isCorrect
@@ -57,9 +72,13 @@ export function ScoreScreen({ result, onPlayAgain }: ScoreScreenProps) {
                 )}
                 className={item.isCorrect ? "answer-correct" : "answer-wrong"}
               >
-                {item.selectedIndex === null
-                  ? "—"
-                  : item.options[item.selectedIndex]}
+                <AnswerText
+                  value={
+                    item.selectedIndex === null
+                      ? null
+                      : item.options[item.selectedIndex]
+                  }
+                />
               </span>
               {!item.isCorrect ? (
                 <>
@@ -69,7 +88,7 @@ export function ScoreScreen({ result, onPlayAgain }: ScoreScreenProps) {
                     lang={answerLang(item.correctAnswer)}
                     className="answer-correct"
                   >
-                    {item.correctAnswer}
+                    <AnswerText value={item.correctAnswer} />
                   </span>
                 </>
               ) : null}
