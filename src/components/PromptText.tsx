@@ -2,7 +2,16 @@ import { swatchFor } from "@/lib/colors";
 
 const ONE_EMOJI =
   /\p{Extended_Pictographic}️?(?:‍\p{Extended_Pictographic}️?)*/gu;
-const EMOJI_RUN = new RegExp(`((?:${ONE_EMOJI.source})+)`, "u");
+// "▭" is not an emoji, but it stands for a rectangle in shape questions
+const EMOJI_RUN = new RegExp(`((?:${ONE_EMOJI.source})+|▭)`, "u");
+
+/** Shape-question symbols drawn as solid shapes, like a worksheet picture. */
+const SHAPES: Record<string, string> = {
+  "⭕": "circle",
+  "⬜": "square",
+  "🔺": "triangle",
+  "▭": "rectangle",
+};
 
 export function emojiCount(text: string): number {
   return text.match(ONE_EMOJI)?.length ?? 0;
@@ -31,6 +40,18 @@ export function PromptText({ text }: { text: string }) {
   return text.split(EMOJI_RUN).map((part, index) => {
     if (index % 2 === 0) {
       return part;
+    }
+
+    const shape = SHAPES[part];
+    if (shape) {
+      return (
+        <span
+          key={index}
+          className={`shape shape-${shape}`}
+          role="img"
+          aria-label="shape"
+        />
+      );
     }
 
     const swatch = swatchFor(part);

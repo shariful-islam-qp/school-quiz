@@ -93,9 +93,17 @@ const ARITHMETIC_FORMATS = [
   "story",
   "picture",
   "match",
+  "truefalse",
 ] as const;
 
-const NUMBER_FORMATS = ["count", "compare", "order", "pattern", "more"] as const;
+const NUMBER_FORMATS = [
+  "count",
+  "compare",
+  "order",
+  "pattern",
+  "more",
+  "numberfact",
+] as const;
 
 type NumberFormat = (typeof NUMBER_FORMATS)[number];
 type MathFormat = (typeof ARITHMETIC_FORMATS)[number] | NumberFormat;
@@ -320,6 +328,46 @@ function moreDraft(maxNumber: number): MathDraft {
   };
 }
 
+function trueFalseDraft(
+  a: number,
+  b: number,
+  operation: Arithmetic,
+): MathDraft {
+  const result = compute(a, b, operation);
+  const isTrue = Math.random() < 0.5;
+  const shown = isTrue
+    ? result
+    : pick([result + 1, result + 2, result - 1].filter((n) => n >= 0));
+  return {
+    prompt: `${a} ${symbolFor(operation)} ${b} = ${shown}. True or false?`,
+    correct: isTrue ? "True" : "False",
+    wrong: [isTrue ? "False" : "True"],
+  };
+}
+
+function numberFactDraft(top: number): MathDraft {
+  const x = randomInt(1, top);
+  let y = randomInt(1, top);
+  while (y === x) {
+    y = randomInt(1, top);
+  }
+  const facts = [
+    { text: `${x} is bigger than ${y}.`, isTrue: x > y },
+    { text: `${x} is smaller than ${y}.`, isTrue: x < y },
+    // Mostly ask about the real neighbour so "true" comes up often enough
+    ...(x > 1
+      ? [{ text: `${x} comes after ${x - 1}.`, isTrue: true }]
+      : []),
+    { text: `${x} comes after ${y}.`, isTrue: x === y + 1 },
+  ];
+  const fact = pick(facts);
+  return {
+    prompt: `${fact.text} True or false?`,
+    correct: fact.isTrue ? "True" : "False",
+    wrong: [fact.isTrue ? "False" : "True"],
+  };
+}
+
 function numberDraft(format: NumberFormat, maxNumber: number): MathDraft {
   // Comparing and ordering need at least a handful of numbers to choose from
   const top = Math.max(maxNumber, 5);
@@ -334,6 +382,8 @@ function numberDraft(format: NumberFormat, maxNumber: number): MathDraft {
       return patternDraft(top);
     case "more":
       return moreDraft(maxNumber);
+    case "numberfact":
+      return numberFactDraft(top);
   }
 }
 
@@ -366,6 +416,8 @@ function buildDraft(
     }
     case "match":
       return matchDraft(a, b, operation, maxNumber);
+    case "truefalse":
+      return trueFalseDraft(a, b, operation);
     default:
       return equationDraft(a, b, operation, maxNumber);
   }

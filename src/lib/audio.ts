@@ -99,7 +99,7 @@ export function subscribeVoices(onChange: () => void): () => void {
 
 /** Text to read, or "" when only pictures are left (e.g. "🍬🍬 − 🍬 = ?"). */
 function toSpoken(text: string, lang: "bn" | "en"): string {
-  const withoutEmoji = text.replace(EMOJI, " ");
+  const withoutEmoji = text.replace(EMOJI, " ").replace(/▭/g, " ");
   if (!/[\p{L}\d]/u.test(withoutEmoji)) {
     return "";
   }

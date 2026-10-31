@@ -623,6 +623,34 @@ fieldset.field {
   font-size: 1.5em;
 }
 
+.shape {
+  display: inline-block;
+  width: 2.4em;
+  height: 2.4em;
+  margin: 0.1em 0.25em;
+  vertical-align: middle;
+}
+
+.shape-circle {
+  border-radius: 999px;
+  background: #ef4444;
+}
+
+.shape-square {
+  background: #4f46e5;
+}
+
+.shape-rectangle {
+  width: 3.6em;
+  height: 2.1em;
+  background: #facc15;
+}
+
+.shape-triangle {
+  background: #65a30d;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
 .color-swatch {
   display: inline-block;
   flex-shrink: 0;

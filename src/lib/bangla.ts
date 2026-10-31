@@ -151,6 +151,40 @@ const OPPOSITES = [
   ["ভালো", "মন্দ"],
 ];
 
+type FixedQuestion = { prompt: string; correct: string; distractors: string[] };
+
+const GIVES_US: FixedQuestion[] = [
+  { prompt: "গরু আমাদের কী দেয়?", correct: "🥛 দুধ", distractors: ["🍯 মধু", "🥚 ডিম", "🧶 পশম"] },
+  { prompt: "মুরগি আমাদের কী দেয়?", correct: "🥚 ডিম", distractors: ["🥛 দুধ", "🍯 মধু", "🧶 পশম"] },
+  { prompt: "মৌমাছি আমাদের কী দেয়?", correct: "🍯 মধু", distractors: ["🥛 দুধ", "🥚 ডিম", "🧶 পশম"] },
+  { prompt: "দিনের আকাশে কী দেখা যায়?", correct: "☀️ সূর্য", distractors: ["🌙 চাঁদ"] },
+  { prompt: "রাতের আকাশে কী দেখা যায়?", correct: "🌙 চাঁদ", distractors: ["☀️ সূর্য"] },
+];
+
+const GENERAL_KNOWLEDGE: FixedQuestion[] = [
+  { prompt: "বাংলাদেশের জাতীয় ফুল কী?", correct: "🪷 শাপলা", distractors: ["🌹 গোলাপ", "🌻 সূর্যমুখী", "🌼 গাঁদা"] },
+  { prompt: "বাংলাদেশের জাতীয় ফল কী?", correct: "কাঁঠাল", distractors: ["আম", "কলা", "লিচু"] },
+  { prompt: "বাংলাদেশের জাতীয় পাখি কী?", correct: "দোয়েল", distractors: ["কাক", "টিয়া", "ময়না"] },
+  { prompt: "বাংলাদেশের জাতীয় মাছ কী?", correct: "ইলিশ", distractors: ["রুই", "কাতলা", "পুঁটি"] },
+  { prompt: "বাংলাদেশের জাতীয় পশু কী?", correct: "🐅 রয়েল বেঙ্গল টাইগার", distractors: ["🦁 সিংহ", "🐘 হাতি", "🐄 গরু"] },
+  { prompt: "বাংলাদেশের রাজধানীর নাম কী?", correct: "ঢাকা", distractors: ["চট্টগ্রাম", "খুলনা", "সিলেট"] },
+  { prompt: "কোন প্রাণী আমাদের দুধ দেয়?", correct: "🐄", distractors: ["🐅", "🦁", "🐍"] },
+  { prompt: "স্বরবর্ণ কয়টি?", correct: "১১", distractors: ["৫", "২৬", "৩৯"] },
+  { prompt: "ব্যঞ্জনবর্ণ কয়টি?", correct: "৩৯", distractors: ["১১", "২৬", "৫০"] },
+  { prompt: "সপ্তাহে কয় দিন?", correct: "৭", distractors: ["৫", "৬", "১০"] },
+];
+
+const TRUE_FALSE: { statement: string; isTrue: boolean }[] = [
+  { statement: "সূর্য পূর্ব দিকে ওঠে।", isTrue: true },
+  { statement: "গরু আমাদের দুধ দেয়।", isTrue: true },
+  { statement: "মাছ পানি ছাড়া বাঁচতে পারে।", isTrue: false },
+  { statement: "সপ্তাহে ৭ দিন।", isTrue: true },
+  { statement: "বাংলাদেশ আমাদের দেশ।", isTrue: true },
+  { statement: "বিড়াল উড়তে পারে।", isTrue: false },
+  { statement: "রাতে আকাশে সূর্য দেখা যায়।", isTrue: false },
+  { statement: "বরফ ঠান্ডা।", isTrue: true },
+];
+
 const COLORS = [
   { emoji: "🔴", name: "লাল" },
   { emoji: "🟢", name: "সবুজ" },
@@ -484,6 +518,46 @@ function oppositeDrafts(): BanglaDraft[] {
   }));
 }
 
+// Words that end in a whole letter: "আম" → "আ" + "ম", not "কলা" (ends in a vowel sign)
+const LAST_LETTER_WORDS = WORDS.filter(
+  (item) =>
+    !item.alt && item.word.length >= 2 && BANGLA_LETTER.test(item.word.slice(-1)),
+);
+
+function missingLastLetterDrafts(): BanglaDraft[] {
+  return LAST_LETTER_WORDS.map((item) => {
+    const last = item.word.slice(-1);
+    return {
+      prompt: `${item.emoji} ${item.word.slice(0, -1)}_ — কোন অক্ষর বসবে?`,
+      correct: last,
+      distractors: uniqueOthers(CONSONANTS, last),
+    };
+  });
+}
+
+function joinLettersDrafts(): BanglaDraft[] {
+  return LAST_LETTER_WORDS.map((item) => ({
+    prompt: `${item.word.slice(0, -1)} + ${item.word.slice(-1)} = ?`,
+    correct: item.word,
+    distractors: uniqueOthers(
+      LAST_LETTER_WORDS.map((other) => other.word),
+      item.word,
+    ),
+  }));
+}
+
+function fixedDrafts(questions: FixedQuestion[]): BanglaDraft[] {
+  return questions.map((item) => ({ ...item }));
+}
+
+function trueFalseDrafts(): BanglaDraft[] {
+  return TRUE_FALSE.map((item) => ({
+    prompt: `${item.statement} সত্য না মিথ্যা?`,
+    correct: item.isTrue ? "সত্য" : "মিথ্যা",
+    distractors: [item.isTrue ? "মিথ্যা" : "সত্য"],
+  }));
+}
+
 function takeDrafts(count: number): BanglaDraft[] {
   // Build only a small sample per type so serverless memory stays low
   const perBucket = Math.max(2, Math.ceil(count / 4));
@@ -511,6 +585,11 @@ function takeDrafts(count: number): BanglaDraft[] {
     shuffle(categoryDrafts()).slice(0, perBucket),
     shuffle(sizeDrafts()).slice(0, perBucket),
     shuffle(oppositeDrafts()).slice(0, perBucket),
+    shuffle(missingLastLetterDrafts()).slice(0, perBucket),
+    shuffle(joinLettersDrafts()).slice(0, perBucket),
+    shuffle(fixedDrafts(GIVES_US)).slice(0, perBucket),
+    shuffle(fixedDrafts(GENERAL_KNOWLEDGE)).slice(0, perBucket),
+    shuffle(trueFalseDrafts()).slice(0, perBucket),
   ]);
 
   const picked: BanglaDraft[] = [];
