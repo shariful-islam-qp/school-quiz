@@ -151,6 +151,8 @@ export function QuizPlayer({
         ? "warn"
         : "danger";
   const banglaText = /[\u0980-\u09FF]/.test(question.prompt);
+  // Word problems and emoji rows wrap badly at the big equation size
+  const compactPrompt = banglaText || question.prompt.length > 16;
 
   function optionClass(optionIndex: number): string {
     if (!feedback) {
@@ -306,7 +308,7 @@ export function QuizPlayer({
       <h2
         key={question.id}
         lang={banglaText ? "bn" : undefined}
-        className={banglaText ? "prompt prompt-compact" : "prompt"}
+        className={compactPrompt ? "prompt prompt-compact" : "prompt"}
       >
         {question.prompt}
       </h2>
